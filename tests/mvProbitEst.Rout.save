@@ -1,0 +1,2521 @@
+
+R version 2.13.2 (2011-09-30)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: i686-pc-linux-gnu (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library( "mvProbit" )
+Loading required package: mvtnorm
+Loading required package: maxLik
+Loading required package: miscTools
+Loading required package: abind
+> 
+> ## generate a simulated data set
+> set.seed( 123 )
+> # number of observations
+> nObs <- 50
+> 
+> # generate explanatory variables
+> xMat <- cbind( 
++    const = rep( 1, nObs ),
++    x1 = as.numeric( rnorm( nObs ) > 0 ),
++    x2 = rnorm( nObs ) )
+> 
+> # model coefficients
+> beta <- cbind( c(  0.8,  1.2, -0.8 ),
++                c( -0.6,  1.0, -1.6 ),
++                c(  0.5, -0.6,  1.2 ) )
+> 
+> # covariance matrix of error terms
+> sigma <- miscTools::symMatrix( c( 1, 0.2, 0.4, 1, -0.1, 1 ) )
+> 
+> # generate dependent variables
+> yMatLin <- xMat %*% beta 
+> yMat <- ( yMatLin + rmvnorm( nObs, sigma = sigma ) ) > 0
+> colnames( yMat ) <- paste( "y", 1:3, sep = "" )
+> 
+> # estimation with the BHHH algorithm, two-sided gradients
+> estResultBHHH <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
++    start = c( beta ), startSigma = sigma,
++    data = as.data.frame( cbind( xMat, yMat ) ), tol = 0.5,
++    algorithm = GenzBretz() )
+> print( estResultBHHH )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, algorithm = GenzBretz(), 
+    tol = 0.5)
+
+Coefficients:
+   b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
+ 1.02508  1.30536 -1.02809 -0.78248  1.14318 -1.66938  0.58229 -0.69667 
+   b_3_2    R_1_2    R_1_3    R_2_3 
+ 1.23283  0.86322  0.36022 -0.08406 
+
+> summary( estResultBHHH )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, algorithm = GenzBretz(), 
+    tol = 0.5)
+
+Coefficients:
+      Estimate Std. error t value Pr(> t)  
+b_1_0  1.02508    0.44548   2.301  0.0214 *
+b_1_1  1.30536    0.73511   1.776  0.0758 .
+b_1_2 -1.02809    0.68851  -1.493  0.1354  
+b_2_0 -0.78248    0.38798  -2.017  0.0437 *
+b_2_1  1.14318    0.53026   2.156  0.0311 *
+b_2_2 -1.66938    0.81308  -2.053  0.0401 *
+b_3_0  0.58229    0.64107   0.908  0.3637  
+b_3_1 -0.69667    0.89818  -0.776  0.4380  
+b_3_2  1.23283    0.62452   1.974  0.0484 *
+R_1_2  0.86322   18.60071   0.046  0.9630  
+R_1_3  0.36022    0.64712   0.557  0.5778  
+R_2_3 -0.08406    0.34909  -0.241  0.8097  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+BHHH maximisation, 1 iterations
+Return code 2: successive function values within tolerance limit
+Log-likelihood: -56.90544 on 12 Df
+
+> logLik( estResultBHHH )
+'log Lik.' -56.90544 (df=12)
+> estResultBHHHA <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
++    start = c( beta, sigma[ lower.tri( sigma ) ] ),
++    data = as.data.frame( cbind( xMat, yMat ) ), tol = 0.5,
++    algorithm = GenzBretz() )
+> all.equal( estResultBHHH, estResultBHHHA )
+[1] "Component 12: target, current do not match when deparsed"
+> 
+> # estimation with the BHHH algorithm, one-sided gradients
+> estResultBHHH1 <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
++    start = c( beta ), startSigma = sigma,
++    data = as.data.frame( cbind( xMat, yMat ) ), tol = 0.5,
++    algorithm = GenzBretz(), oneSidedGrad = TRUE )
+> print( estResultBHHH1 )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, algorithm = GenzBretz(), 
+    oneSidedGrad = TRUE, tol = 0.5)
+
+Coefficients:
+   b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
+ 1.02508  1.30536 -1.02809 -0.78248  1.14318 -1.66938  0.58229 -0.69667 
+   b_3_2    R_1_2    R_1_3    R_2_3 
+ 1.23283  0.86322  0.36022 -0.08406 
+
+> summary( estResultBHHH1 )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, algorithm = GenzBretz(), 
+    oneSidedGrad = TRUE, tol = 0.5)
+
+Coefficients:
+      Estimate Std. error t value Pr(> t)  
+b_1_0  1.02508    0.44548   2.301  0.0214 *
+b_1_1  1.30536    0.73511   1.776  0.0758 .
+b_1_2 -1.02809    0.68851  -1.493  0.1354  
+b_2_0 -0.78248    0.38797  -2.017  0.0437 *
+b_2_1  1.14318    0.53026   2.156  0.0311 *
+b_2_2 -1.66938    0.81307  -2.053  0.0401 *
+b_3_0  0.58229    0.64106   0.908  0.3637  
+b_3_1 -0.69667    0.89817  -0.776  0.4380  
+b_3_2  1.23283    0.62452   1.974  0.0484 *
+R_1_2  0.86322   18.60041   0.046  0.9630  
+R_1_3  0.36022    0.64712   0.557  0.5778  
+R_2_3 -0.08406    0.34909  -0.241  0.8097  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+BHHH maximisation, 1 iterations
+Return code 2: successive function values within tolerance limit
+Log-likelihood: -56.90544 on 12 Df
+
+> logLik( estResultBHHH1 )
+'log Lik.' -56.90544 (df=12)
+> all.equal( estResultBHHH, estResultBHHH1 )
+[1] "Component 1: Mean relative difference: 1.825892e-08"     
+[2] "Component 2: Mean relative difference: 1.179601e-07"     
+[3] "Component 3: Mean relative difference: 1.25489e-06"      
+[4] "Component 4: Mean relative difference: 4.704361e-07"     
+[5] "Component 11: Mean relative difference: 4.501242e-07"    
+[6] "Component 12: target, current do not match when deparsed"
+> 
+> # estimation with the BFGS algorithm, two-sided gradients
+> estResultBFGS <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
++    start = c( beta ), startSigma = sigma, method = "BFGS",
++    data = as.data.frame( cbind( xMat, yMat ) ), 
++    tol = 0.5, algorithm = GenzBretz() )
+> print( estResultBFGS )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, method = "BFGS", 
+    algorithm = GenzBretz(), tol = 0.5)
+
+Coefficients:
+   b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
+ 0.53607  1.16101 -1.14212 -0.44952  1.05496 -1.57624  0.40751 -0.85400 
+   b_3_2    R_1_2    R_1_3    R_2_3 
+ 1.25958  0.29483  0.32822 -0.02382 
+
+> summary( estResultBFGS )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, method = "BFGS", 
+    algorithm = GenzBretz(), tol = 0.5)
+
+Coefficients:
+      Estimate Std. error t value Pr(> t)  
+b_1_0  0.53607    0.82709   0.648  0.5169  
+b_1_1  1.16101    0.91515   1.269  0.2046  
+b_1_2 -1.14212    0.93847  -1.217  0.2236  
+b_2_0 -0.44952    0.79215  -0.567  0.5704  
+b_2_1  1.05496    0.88398   1.193  0.2327  
+b_2_2 -1.57624    0.73187  -2.154  0.0313 *
+b_3_0  0.40751    0.48897   0.833  0.4046  
+b_3_1 -0.85400    0.84871  -1.006  0.3143  
+b_3_2  1.25958    0.68040   1.851  0.0641 .
+R_1_2  0.29483    1.85817   0.159  0.8739  
+R_1_3  0.32822    0.70923   0.463  0.6435  
+R_2_3 -0.02382    0.34466  -0.069  0.9449  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+BFGS maximisation, 4 iterations
+Return code 0: successful convergence 
+Log-likelihood: -52.94456 on 12 Df
+
+> logLik( estResultBFGS )
+'log Lik.' -52.94456 (df=12)
+> 
+> # estimation with the BFGS algorithm, one-sided gradients
+> estResultBFGS1 <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
++    start = c( beta ), startSigma = sigma, method = "BFGS", 
++    data = as.data.frame( cbind( xMat, yMat ) ), 
++    tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
+> print( estResultBFGS1 )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, method = "BFGS", 
+    algorithm = GenzBretz(), oneSidedGrad = TRUE, tol = 0.5)
+
+Coefficients:
+   b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
+ 0.53607  1.16101 -1.14213 -0.44952  1.05496 -1.57624  0.40751 -0.85400 
+   b_3_2    R_1_2    R_1_3    R_2_3 
+ 1.25958  0.29483  0.32822 -0.02382 
+
+> summary( estResultBFGS1 )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, method = "BFGS", 
+    algorithm = GenzBretz(), oneSidedGrad = TRUE, tol = 0.5)
+
+Coefficients:
+      Estimate Std. error t value Pr(> t)  
+b_1_0  0.53607    0.82709   0.648  0.5169  
+b_1_1  1.16101    0.91515   1.269  0.2046  
+b_1_2 -1.14213    0.93847  -1.217  0.2236  
+b_2_0 -0.44952    0.79215  -0.567  0.5704  
+b_2_1  1.05496    0.88398   1.193  0.2327  
+b_2_2 -1.57624    0.73187  -2.154  0.0313 *
+b_3_0  0.40751    0.48897   0.833  0.4046  
+b_3_1 -0.85400    0.84871  -1.006  0.3143  
+b_3_2  1.25958    0.68040   1.851  0.0641 .
+R_1_2  0.29483    1.85817   0.159  0.8739  
+R_1_3  0.32822    0.70923   0.463  0.6435  
+R_2_3 -0.02382    0.34466  -0.069  0.9449  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+BFGS maximisation, 4 iterations
+Return code 0: successful convergence 
+Log-likelihood: -52.94456 on 12 Df
+
+> logLik( estResultBFGS1 )
+'log Lik.' -52.94456 (df=12)
+> all.equal( estResultBFGS, estResultBFGS1 )
+[1] "Component 2: Mean relative difference: 2.633406e-07"     
+[2] "Component 3: Mean relative difference: 8.516113e-07"     
+[3] "Component 4: Mean relative difference: 4.317256e-07"     
+[4] "Component 12: Mean relative difference: 2.450236e-07"    
+[5] "Component 13: target, current do not match when deparsed"
+> 
+> # estimation with the BFGS algorithm, one-sided gradients, no starting values
+> estResultBFGS1a <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
++    data = as.data.frame( cbind( xMat, yMat ) ), method = "BFGS",
++    tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
+> print( estResultBFGS1a )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), method = "BFGS", algorithm = GenzBretz(), oneSidedGrad = TRUE, 
+    tol = 0.5)
+
+Coefficients:
+   b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
+ 0.79353  1.88367 -1.74922 -0.40036  0.91577 -1.52106  0.97790 -1.69433 
+   b_3_2    R_1_2    R_1_3    R_2_3 
+ 1.57625  0.75270  0.23721 -0.03453 
+
+> summary( estResultBFGS1a )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), method = "BFGS", algorithm = GenzBretz(), oneSidedGrad = TRUE, 
+    tol = 0.5)
+
+Coefficients:
+      Estimate Std. error t value Pr(> t)  
+b_1_0  0.79353    0.90412   0.878  0.3801  
+b_1_1  1.88367    0.90668   2.078  0.0378 *
+b_1_2 -1.74922    0.97400  -1.796  0.0725 .
+b_2_0 -0.40036    0.69056  -0.580  0.5621  
+b_2_1  0.91577    0.97998   0.934  0.3501  
+b_2_2 -1.52106    0.72006  -2.112  0.0347 *
+b_3_0  0.97790    0.64497   1.516  0.1295  
+b_3_1 -1.69433    0.94788  -1.787  0.0739 .
+b_3_2  1.57625    0.73399   2.148  0.0318 *
+R_1_2  0.75270    4.32729   0.174  0.8619  
+R_1_3  0.23721    0.90535   0.262  0.7933  
+R_2_3 -0.03453    0.35889  -0.096  0.9234  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+BFGS maximisation, 3 iterations
+Return code 0: successful convergence 
+Log-likelihood: -49.36404 on 12 Df
+
+> logLik( estResultBFGS1a )
+'log Lik.' -49.36404 (df=12)
+> 
+> # estimation with the BFGS algorithm, one-sided gradients, no starting values for beta
+> estResultBFGS1b <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
++    startSigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ), 
++    method = "BFGS", tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
+> print( estResultBFGS1b )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), startSigma = sigma, method = "BFGS", algorithm = GenzBretz(), 
+    oneSidedGrad = TRUE, tol = 0.5)
+
+Coefficients:
+  b_1_0   b_1_1   b_1_2   b_2_0   b_2_1   b_2_2   b_3_0   b_3_1   b_3_2   R_1_2 
+ 0.8110  1.9060 -1.7627 -0.3770  0.9441 -1.5332  0.9372 -1.7498  1.6024  0.6817 
+  R_1_3   R_2_3 
+ 0.4044  0.1663 
+
+> summary( estResultBFGS1b )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), startSigma = sigma, method = "BFGS", algorithm = GenzBretz(), 
+    oneSidedGrad = TRUE, tol = 0.5)
+
+Coefficients:
+      Estimate Std. error t value Pr(> t)  
+b_1_0   0.8110     0.9297   0.872  0.3830  
+b_1_1   1.9060     0.9160   2.081  0.0375 *
+b_1_2  -1.7627     1.0131  -1.740  0.0819 .
+b_2_0  -0.3770     0.7049  -0.535  0.5928  
+b_2_1   0.9441     1.0345   0.913  0.3615  
+b_2_2  -1.5332     0.7517  -2.040  0.0414 *
+b_3_0   0.9372     0.6291   1.490  0.1363  
+b_3_1  -1.7498     0.9996  -1.751  0.0800 .
+b_3_2   1.6024     0.7848   2.042  0.0412 *
+R_1_2   0.6817     3.4094   0.200  0.8415  
+R_1_3   0.4044     0.8024   0.504  0.6143  
+R_2_3   0.1663     0.3389   0.491  0.6235  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+BFGS maximisation, 3 iterations
+Return code 0: successful convergence 
+Log-likelihood: -49.57444 on 12 Df
+
+> logLik( estResultBFGS1b )
+'log Lik.' -49.57444 (df=12)
+> 
+> # estimation with the BFGS algorithm, one-sided gradients, no starting values for sigma
+> estResultBFGS1s <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
++    start = c( beta ), data = as.data.frame( cbind( xMat, yMat ) ), 
++    method = "BFGS", tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
+> print( estResultBFGS1s )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), method = "BFGS", algorithm = GenzBretz(), 
+    oneSidedGrad = TRUE, tol = 0.5)
+
+Coefficients:
+   b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
+ 0.55814  1.14958 -1.12747 -0.44426  1.07325 -1.57226  0.37255 -0.85470 
+   b_3_2    R_1_2    R_1_3    R_2_3 
+ 1.23011  0.34981 -0.01177  0.09435 
+
+> summary( estResultBFGS1s )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), method = "BFGS", algorithm = GenzBretz(), 
+    oneSidedGrad = TRUE, tol = 0.5)
+
+Coefficients:
+      Estimate Std. error t value Pr(> t)  
+b_1_0  0.55814    0.86615   0.644  0.5193  
+b_1_1  1.14958    0.90607   1.269  0.2045  
+b_1_2 -1.12747    0.94191  -1.197  0.2313  
+b_2_0 -0.44426    0.85526  -0.519  0.6035  
+b_2_1  1.07325    0.99314   1.081  0.2798  
+b_2_2 -1.57226    0.78557  -2.001  0.0453 *
+b_3_0  0.37255    0.56172   0.663  0.5072  
+b_3_1 -0.85470    0.95214  -0.898  0.3694  
+b_3_2  1.23011    0.71506   1.720  0.0854 .
+R_1_2  0.34981    2.02289   0.173  0.8627  
+R_1_3 -0.01177    0.70776  -0.017  0.9867  
+R_2_3  0.09435    0.33920   0.278  0.7809  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+BFGS maximisation, 4 iterations
+Return code 0: successful convergence 
+Log-likelihood: -52.78274 on 12 Df
+
+> logLik( estResultBFGS1s )
+'log Lik.' -52.78274 (df=12)
+> 
+> # estimation with the BFGS algorithm, Miwa algorithm for obtaining integrals
+> estResultBFGSm <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
++    start = c( beta ), startSigma = sigma, 
++    data = as.data.frame( cbind( xMat, yMat ) ), method = "BFGS",
++    tol = 0.5, algorithm = Miwa( steps = 64 ) )
+There were 13 warnings (use warnings() to see them)
+> print( estResultBFGSm )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, method = "BFGS", 
+    algorithm = Miwa(steps = 64), tol = 0.5)
+
+Coefficients:
+   b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
+ 0.53609  1.16102 -1.14213 -0.44952  1.05496 -1.57624  0.40753 -0.85400 
+   b_3_2    R_1_2    R_1_3    R_2_3 
+ 1.25960  0.29491  0.32819 -0.02386 
+
+> summary( estResultBFGSm )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, method = "BFGS", 
+    algorithm = Miwa(steps = 64), tol = 0.5)
+
+Coefficients:
+      Estimate Std. error t value Pr(> t)  
+b_1_0  0.53609    0.82702   0.648  0.5168  
+b_1_1  1.16102    0.91511   1.269  0.2045  
+b_1_2 -1.14213    0.93837  -1.217  0.2235  
+b_2_0 -0.44952    0.79215  -0.567  0.5704  
+b_2_1  1.05496    0.88386   1.194  0.2326  
+b_2_2 -1.57624    0.73173  -2.154  0.0312 *
+b_3_0  0.40753    0.48894   0.834  0.4046  
+b_3_1 -0.85400    0.84860  -1.006  0.3142  
+b_3_2  1.25960    0.68024   1.852  0.0641 .
+R_1_2  0.29491    1.85789   0.159  0.8739  
+R_1_3  0.32819    0.70903   0.463  0.6435  
+R_2_3 -0.02386    0.34468  -0.069  0.9448  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+BFGS maximisation, 4 iterations
+Return code 0: successful convergence 
+Log-likelihood: -52.94417 on 12 Df
+
+> logLik( estResultBFGSm )
+'log Lik.' -52.94417 (df=12)
+> all.equal( estResultBFGS, estResultBFGSm )
+[1] "Component 1: Mean relative difference: 7.343934e-06"     
+[2] "Component 2: Mean relative difference: 2.683038e-05"     
+[3] "Component 3: Mean relative difference: 0.0001800699"     
+[4] "Component 4: Mean relative difference: 0.0001779414"     
+[5] "Component 12: Mean relative difference: 0.000115282"     
+[6] "Component 13: target, current do not match when deparsed"
+> 
+> # estimation with the BFGS algorithm, GHK algorithm for obtaining integrals
+> estResultBFGSg <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
++    start = c( beta ), startSigma = sigma, 
++    data = as.data.frame( cbind( xMat, yMat ) ), method = "BFGS",
++    tol = 0.5 )
+There were 50 or more warnings (use warnings() to see the first 50)
+> print( estResultBFGSg )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, method = "BFGS", 
+    tol = 0.5)
+
+Coefficients:
+   b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
+ 0.53597  1.16071 -1.14239 -0.45176  1.05313 -1.57570  0.40385 -0.85710 
+   b_3_2    R_1_2    R_1_3    R_2_3 
+ 1.25977  0.29530  0.32495 -0.02085 
+
+> summary( estResultBFGSg )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, method = "BFGS", 
+    tol = 0.5)
+
+Coefficients:
+      Estimate Std. error t value Pr(> t)  
+b_1_0  0.53597    0.82729   0.648  0.5171  
+b_1_1  1.16071    0.91440   1.269  0.2043  
+b_1_2 -1.14239    0.93839  -1.217  0.2235  
+b_2_0 -0.45176    0.80664  -0.560  0.5754  
+b_2_1  1.05313    0.86861   1.212  0.2253  
+b_2_2 -1.57570    0.70696  -2.229  0.0258 *
+b_3_0  0.40385    0.48737   0.829  0.4073  
+b_3_1 -0.85710    0.84821  -1.010  0.3123  
+b_3_2  1.25977    0.67819   1.858  0.0632 .
+R_1_2  0.29530    1.85491   0.159  0.8735  
+R_1_3  0.32495    0.70449   0.461  0.6446  
+R_2_3 -0.02085    0.34616  -0.060  0.9520  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+BFGS maximisation, 4 iterations
+Return code 0: successful convergence 
+Log-likelihood: -52.93771 on 12 Df
+
+> logLik( estResultBFGSg )
+'log Lik.' -52.93771 (df=12)
+> all.equal( estResultBFGS, estResultBFGSg )
+[1] "Component 1: Mean relative difference: 0.000129477"      
+[2] "Component 2: Mean relative difference: 0.00208213"       
+[3] "Component 3: Mean relative difference: 0.01734212"       
+[4] "Component 4: Mean relative difference: 0.01316397"       
+[5] "Component 12: Mean relative difference: 0.006852369"     
+[6] "Component 13: target, current do not match when deparsed"
+> all.equal( estResultBFGSm, estResultBFGSg )
+[1] "Component 1: Mean relative difference: 0.000122134"      
+[2] "Component 2: Mean relative difference: 0.002077232"      
+[3] "Component 3: Mean relative difference: 0.01738213"       
+[4] "Component 4: Mean relative difference: 0.01309901"       
+[5] "Component 12: Mean relative difference: 0.006838735"     
+[6] "Component 13: target, current do not match when deparsed"
+> 
+> # estimation with the Nelder-Mead algorithm
+> estResultNM <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
++    start = c( beta ), startSigma = sigma, 
++    data = as.data.frame( cbind( xMat, yMat ) ), 
++    method = "NM", reltol = 0.05, algorithm = GenzBretz() )
+> print( estResultNM )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, method = "NM", 
+    algorithm = GenzBretz(), reltol = 0.05)
+
+Coefficients:
+b_1_0 b_1_1 b_1_2 b_2_0 b_2_1 b_2_2 b_3_0 b_3_1 b_3_2 R_1_2 R_1_3 R_2_3 
+ 0.80  1.20 -0.80 -0.44  1.00 -1.60  0.50 -0.60  1.20  0.20  0.40 -0.10 
+
+> summary( estResultNM )
+
+Call:
+mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = as.data.frame(cbind(xMat, 
+    yMat)), start = c(beta), startSigma = sigma, method = "NM", 
+    algorithm = GenzBretz(), reltol = 0.05)
+
+Coefficients:
+      Estimate Std. error t value Pr(> t)  
+b_1_0   0.8000     1.0541   0.759  0.4479  
+b_1_1   1.2000     0.7460   1.609  0.1077  
+b_1_2  -0.8000     0.9185  -0.871  0.3838  
+b_2_0  -0.4400     0.7968  -0.552  0.5808  
+b_2_1   1.0000     0.8707   1.149  0.2507  
+b_2_2  -1.6000     0.6578  -2.432  0.0150 *
+b_3_0   0.5000     0.5151   0.971  0.3317  
+b_3_1  -0.6000     0.7708  -0.778  0.4363  
+b_3_2   1.2000     0.6109   1.964  0.0495 *
+R_1_2   0.2000     2.4163   0.083  0.9340  
+R_1_3   0.4000     0.7321   0.546  0.5848  
+R_2_3  -0.1000     0.3416  -0.293  0.7697  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+Nelder-Mead maximisation, 13 iterations
+Return code 0: successful convergence 
+Log-likelihood: -56.94782 on 12 Df
+
+> logLik( estResultNM )
+'log Lik.' -56.94782 (df=12)
+> 
+> 
+> ## testing the logLik method
+> # argument 'coef'
+> all.equal( logLik( estResultBHHH ), 
++    logLik( estResultBHHH, coef = coef( estResultBHHH ) ) )
+[1] TRUE
+> logLik( estResultBHHH ) -
++    logLik( estResultBHHH, coef = coef( estResultBHHH ) * 0.999 )
+'log Lik.' -0.004270927 (df=12)
+> 
+> # argument 'data'
+> all.equal( logLik( estResultBHHH ), 
++    logLik( estResultBHHH, data = as.data.frame( cbind( xMat, yMat ) ) ) )
+[1] TRUE
+> logLik( estResultBHHH ) -
++    logLik( estResultBHHH, data = as.data.frame( cbind( xMat * 0.999, yMat ) ) )
+'log Lik.' 0.01228506 (df=12)
+> 
+> # argument 'algorithm'
+> all.equal( logLik( estResultBHHH ), 
++    logLik( estResultBHHH, algorithm = GenzBretz() ) )
+[1] TRUE
+> logLik( estResultBHHH ) -
++    logLik( estResultBHHH, algorithm = Miwa() )
+'log Lik.' -0.001091556 (df=12)
+> 
+> # argument 'nGHK'
+> all.equal( logLik( estResultBHHH ), 
++    logLik( estResultBHHH, nGHK = 5555 ) )
+[1] TRUE
+> logLik( estResultBHHH, algorithm = "GHK" ) -
++    logLik( estResultBHHH, algorithm = "GHK", nGHK = 2000 )
+'log Lik.' -0.1316356 (df=12)
+> 
+> # argument 'random.seed'
+> all.equal( logLik( estResultBHHH ), 
++    logLik( estResultBHHH, random.seed = 123 ) )
+[1] TRUE
+> logLik( estResultBHHH ) -
++    logLik( estResultBHHH, random.seed = 1234 )
+'log Lik.' -0.006403428 (df=12)
+> 
+> 
+> # marginal effects based on estimated coefficients with covariance matrix
+> # unconditional marginal effects (with Jacobian)
+> margEffUnc <- margEff( estResultBFGS, calcVCov = TRUE, returnJacobian = TRUE )
+> print( margEffUnc )
+      d_y1_d_x1    d_y2_d_x1    d_y3_d_x1    d_y1_d_x2     d_y2_d_x2
+1  0.3229491571 0.3836676992 -0.316955571 -0.441979915 -0.4386127078
+2  0.2429445848 0.3993797590 -0.330144619 -0.387614512 -0.5794260400
+3  0.2388601819 0.3982789455 -0.329783586 -0.099223749 -0.5013923968
+4  0.4010839953 0.0557836102 -0.084205830 -0.451571736 -0.1886322555
+5  0.1883227203 0.3691077222 -0.316570405 -0.067411731 -0.3961556791
+6  0.3702088341 0.0348830182 -0.061413065 -0.455364197 -0.1278614688
+7  0.0103207595 0.0220458595 -0.053123552 -0.001122225 -0.0060669426
+8  0.4007100991 0.2907940043 -0.259618855 -0.451711635 -0.2456774131
+9  0.2866645193 0.3996281228 -0.327737008 -0.421511449 -0.5108161192
+10 0.3126554267 0.3897239251 -0.320854424 -0.436950408 -0.4603049277
+11 0.3559814758 0.3554683196 -0.299468024 -0.205103323 -0.6288130110
+12 0.1219655175 0.2849034003 -0.270662367 -0.034586201 -0.2369272202
+13 0.1607955228 0.3407304015 -0.301945123 -0.052636441 -0.3318476745
+14 0.0425053789 0.1103217794 -0.148796997 -0.007619505 -0.0545819827
+15 0.0374442582 0.0966390781 -0.136761212 -0.096792632 -0.2915498517
+16 0.3364458707 0.3738145586 -0.310770786 -0.183076398 -0.6237777822
+17 0.3723866025 0.3359155655 -0.287500211 -0.225743149 -0.6256260658
+18 0.2663398659 0.4021325788 -0.330275056 -0.406929888 -0.5455404372
+19 0.4376429542 0.1696359686 -0.178946449 -0.370373203 -0.4388108527
+20 0.2241585805 0.0042036728 -0.014953502 -0.089300446 -0.0007183302
+21 0.1243685670 0.2889115851 -0.273009380 -0.249665699 -0.5965848232
+22 0.0007459368 0.0006997555 -0.005794037 -0.002963512 -0.0038764260
+23 0.4382229462 0.1426446471 -0.158983664 -0.377686061 -0.0793317558
+24 0.0830536061 0.2095390165 -0.223402595 -0.184151430 -0.5029618391
+25 0.0865903765 0.2172089609 -0.228508578 -0.190194230 -0.5140300922
+26 0.4378382911 0.1365702837 -0.154340785 -0.372385737 -0.0744061887
+27 0.1729600304 0.3543882323 -0.309111596 -0.058957089 -0.3607121360
+28 0.0257893979 0.0644472362 -0.105597216 -0.003833087 -0.0256483436
+29 0.3029664390 0.3943070185 -0.323906809 -0.431637730 -0.4798749185
+30 0.2118732333 0.3863181844 -0.324795264 -0.081441034 -0.4476780387
+31 0.2527667060 0.4012707688 -0.330599116 -0.109160768 -0.5263904900
+32 0.3573773964 0.3539600683 -0.298544079 -0.453545721 -0.3597566944
+33 0.1516902826 0.3293284563 -0.295806452 -0.048116319 -0.3098804128
+34 0.4109693775 0.2693770277 -0.246106417 -0.287100465 -0.5780744977
+35 0.1897254894 0.3703130155 -0.317166727 -0.068210588 -0.3993266523
+36 0.3438409908 0.3674584553 -0.306835661 -0.191130998 -0.6266939812
+37 0.4348121020 0.1159357570 -0.138075145 -0.412808406 -0.3345517685
+38 0.3693685444 0.3398244946 -0.289893267 -0.455294843 -0.3300385705
+39 0.1625954940 0.3428642991 -0.303078714 -0.301623340 -0.6275330281
+40 0.4310083028 0.1021309737 -0.126696301 -0.337178116 -0.0488785748
+41 0.4383602628 0.1464601355 -0.161869641 -0.380895849 -0.0824913410
+42 0.3938189786 0.3033933329 -0.267470489 -0.453789429 -0.2652455676
+43 0.3189542362 0.3861651946 -0.318550501 -0.440105656 -0.4471386008
+44 0.0971786805 0.2391890488 -0.242745143 -0.024716381 -0.1761938531
+45 0.4025240934 0.0571278504 -0.085567351 -0.451004212 -0.1923211012
+46 0.1023270344 0.2493442534 -0.249136290 -0.216048167 -0.5558718553
+47 0.1866549090 0.0021906375 -0.009700155 -0.066467854 -0.0003164631
+48 0.3664195841 0.0330393066 -0.059215375 -0.217972882 -0.0103701668
+49 0.1856983820 0.3667908424 -0.315417388 -0.065929410 -0.3901921733
+50 0.0417272238 0.1082331002 -0.146997339 -0.105894032 -0.3177684702
+     d_y3_d_x2
+1  0.385921457
+2  0.468985619
+3  0.443346687
+4  0.222238974
+5  0.384718603
+6  0.172171936
+7  0.028392575
+8  0.261220788
+9  0.428728212
+10 0.398908844
+11 0.502249044
+12 0.280689477
+13 0.345312727
+14 0.112624216
+15 0.322287902
+16 0.501467723
+17 0.499011308
+18 0.449048188
+19 0.389108071
+20 0.005756040
+21 0.491440700
+22 0.022018756
+23 0.123707351
+24 0.446573484
+25 0.452240875
+26 0.118602809
+27 0.363374398
+28 0.070196017
+29 0.410521296
+30 0.414264757
+31 0.456293194
+32 0.337325583
+33 0.331118108
+34 0.470092740
+35 0.386586180
+36 0.502296099
+37 0.324544502
+38 0.318287912
+39 0.502499069
+40 0.090013131
+41 0.126925752
+42 0.274927429
+43 0.391041960
+44 0.233697242
+45 0.225088604
+46 0.472883551
+47 0.003381937
+48 0.032673430
+49 0.381188131
+50 0.339567947
+> print( attr( margEffUnc, "vcov" )[ 1:5, , ] )
+, , d_y1_d_x1
+
+   d_y1_d_x1    d_y2_d_x1    d_y3_d_x1     d_y1_d_x2    d_y2_d_x2    d_y3_d_x2
+1 0.03877687 -0.016279760 -0.006506543 -0.0085524411 -0.019547037  0.005454279
+2 0.04152043 -0.040327021 -0.019207150  0.0004315898  0.007676233  0.012659633
+3 0.04198335 -0.041152336 -0.019563310 -0.0163880273  0.028694027  0.004474309
+4 0.07492160 -0.005167857  0.014058108 -0.0450526067  0.010011396 -0.020390007
+5 0.04747089 -0.045578202 -0.021184702 -0.0229278566  0.016834638 -0.004204519
+
+, , d_y2_d_x1
+
+     d_y1_d_x1  d_y2_d_x1    d_y3_d_x1    d_y1_d_x2    d_y2_d_x2     d_y3_d_x2
+1 -0.016279760 0.06838234  0.032611453 -0.030785596  0.036198536 -0.0175058405
+2 -0.040327021 0.09950789  0.038272789 -0.009186342 -0.007934649 -0.0359693510
+3 -0.041152336 0.10008456  0.037883511  0.029127127 -0.029041689 -0.0145595674
+4 -0.005167857 0.01254829 -0.003709549  0.016806180 -0.027225552  0.0053803236
+5 -0.045578202 0.09564278  0.028093463  0.025822338 -0.009540776  0.0006788095
+
+, , d_y3_d_x1
+
+     d_y1_d_x1    d_y2_d_x1  d_y3_d_x1    d_y1_d_x2     d_y2_d_x2    d_y3_d_x2
+1 -0.006506543  0.032611453 0.08668897 -0.031957080  0.0071226706  0.006486255
+2 -0.019207150  0.038272789 0.09482705 -0.012376408 -0.0219579805 -0.020635830
+3 -0.019563310  0.037883511 0.09443552  0.021043220 -0.0158342307 -0.006807902
+4  0.014058108 -0.003709549 0.01349634 -0.003779655  0.0074845084 -0.017363703
+5 -0.021184702  0.028093463 0.08326911  0.017113366 -0.0006060267  0.011689134
+
+, , d_y1_d_x2
+
+      d_y1_d_x1    d_y2_d_x1    d_y3_d_x1  d_y1_d_x2    d_y2_d_x2   d_y3_d_x2
+1 -0.0085524411 -0.030785596 -0.031957080 0.10518470 -0.014246799 0.003877102
+2  0.0004315898 -0.009186342 -0.012376408 0.04271272  0.010036546 0.004318761
+3 -0.0163880273  0.029127127  0.021043220 0.03140680 -0.018753031 0.008672458
+4 -0.0450526067  0.016806180 -0.003779655 0.14013492 -0.034582161 0.009486614
+5 -0.0229278566  0.025822338  0.017113366 0.02541768 -0.007777457 0.010209240
+
+, , d_y2_d_x2
+
+     d_y1_d_x1    d_y2_d_x1     d_y3_d_x1    d_y1_d_x2  d_y2_d_x2    d_y3_d_x2
+1 -0.019547037  0.036198536  0.0071226706 -0.014246799 0.04659230 -0.013947597
+2  0.007676233 -0.007934649 -0.0219579805  0.010036546 0.03455302 -0.006000680
+3  0.028694027 -0.029041689 -0.0158342307 -0.018753031 0.07259357 -0.010834949
+4  0.010011396 -0.027225552  0.0074845084 -0.034582161 0.05970141 -0.010805226
+5  0.016834638 -0.009540776 -0.0006060267 -0.007777457 0.04534636 -0.007453327
+
+, , d_y3_d_x2
+
+     d_y1_d_x1     d_y2_d_x1    d_y3_d_x1   d_y1_d_x2    d_y2_d_x2  d_y3_d_x2
+1  0.005454279 -0.0175058405  0.006486255 0.003877102 -0.013947597 0.02721375
+2  0.012659633 -0.0359693510 -0.020635830 0.004318761 -0.006000680 0.05602195
+3  0.004474309 -0.0145595674 -0.006807902 0.008672458 -0.010834949 0.04244698
+4 -0.020390007  0.0053803236 -0.017363703 0.009486614 -0.010805226 0.02391138
+5 -0.004204519  0.0006788095  0.011689134 0.010209240 -0.007453327 0.02699698
+
+> print( drop( attr( margEffUnc, "vcov" )[ nObs, , ] ) )
+             d_y1_d_x1    d_y2_d_x1    d_y3_d_x1    d_y1_d_x2    d_y2_d_x2
+d_y1_d_x1  0.020288104 -0.002813578 -0.001572159 -0.031743940  0.014206862
+d_y2_d_x1 -0.002813578  0.011445332 -0.006468166  0.005122685 -0.020284870
+d_y3_d_x1 -0.001572159 -0.006468166  0.021217346  0.002631792  0.008918785
+d_y1_d_x2 -0.031743940  0.005122685  0.002631792  0.050169955 -0.024127042
+d_y2_d_x2  0.014206862 -0.020284870  0.008918785 -0.024127042  0.046770483
+d_y3_d_x2  0.002395896  0.003782239 -0.015842908 -0.003698285 -0.004816119
+             d_y3_d_x2
+d_y1_d_x1  0.002395896
+d_y2_d_x1  0.003782239
+d_y3_d_x1 -0.015842908
+d_y1_d_x2 -0.003698285
+d_y2_d_x2 -0.004816119
+d_y3_d_x2  0.019248488
+> print( attr( margEffUnc, "jacobian" )[ 1:5, , ] )
+, , b_1_0
+
+   d_y1_d_x1 d_y2_d_x1 d_y3_d_x1  d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+1 -0.2388744         0         0 0.10904915         0         0
+2 -0.2499983         0         0 0.22038073         0         0
+3 -0.2493160         0         0 0.17333744         0         0
+4  0.1599499         0         0 0.06061104         0         0
+5 -0.2320732         0         0 0.13187340         0         0
+
+, , b_1_1
+
+   d_y1_d_x1 d_y2_d_x1 d_y3_d_x1  d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+1 0.14810593         0         0 0.00000000         0         0
+2 0.08938182         0         0 0.00000000         0         0
+3 0.08687644         0         0 0.17333744         0         0
+4 0.39537857         0         0 0.06061104         0         0
+5 0.05902308         0         0 0.13187340         0         0
+
+, , b_1_2
+
+    d_y1_d_x1 d_y2_d_x1 d_y3_d_x1  d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+1 -0.06051131         0         0 0.41462304         0         0
+2  0.00713664         0         0 0.33316686         0         0
+3  0.01068829         0         0 0.07939516         0         0
+4  0.21890784         0         0 0.47817985         0         0
+5  0.05239540         0         0 0.02922476         0         0
+
+, , b_2_0
+
+  d_y1_d_x1   d_y2_d_x1 d_y3_d_x1 d_y1_d_x2  d_y2_d_x2 d_y3_d_x2
+1         0  0.11228991         0         0 -0.3723514         0
+2         0 -0.04471821         0         0 -0.2344970         0
+3         0 -0.05278442         0         0  0.3373956         0
+4         0  0.10632658         0         0 -0.2927056         0
+5         0 -0.14586693         0         0  0.3809701         0
+
+, , b_2_1
+
+  d_y1_d_x1 d_y2_d_x1 d_y3_d_x1 d_y1_d_x2  d_y2_d_x2 d_y3_d_x2
+1         0 0.3905552         0         0  0.0000000         0
+2         0 0.3228821         0         0  0.0000000         0
+3         0 0.3180941         0         0  0.3375706         0
+4         0 0.1196723         0         0 -0.2927275         0
+5         0 0.2513296         0         0  0.3809701         0
+
+, , b_2_2
+
+  d_y1_d_x1   d_y2_d_x1 d_y3_d_x1 d_y1_d_x2  d_y2_d_x2 d_y3_d_x2
+1         0 0.028445114         0         0  0.1839853         0
+2         0 0.001276560         0         0  0.3743377         0
+3         0 0.002262892         0         0  0.3035692         0
+4         0 0.145518796         0         0 -0.2809522         0
+5         0 0.032932520         0         0  0.1654057         0
+
+, , b_3_0
+
+  d_y1_d_x1 d_y2_d_x1   d_y3_d_x1 d_y1_d_x2 d_y2_d_x2  d_y3_d_x2
+1         0         0  0.08932894         0         0 -0.2803831
+2         0         0 -0.01722018         0         0 -0.1742430
+3         0         0 -0.02279842         0         0  0.2218592
+4         0         0  0.13528012         0         0 -0.2837393
+5         0         0 -0.09049632         0         0  0.2811522
+
+, , b_3_1
+
+  d_y1_d_x1 d_y2_d_x1 d_y3_d_x1 d_y1_d_x2 d_y2_d_x2  d_y3_d_x2
+1         0         0 0.3957169         0         0  0.0000000
+2         0         0 0.3551135         0         0  0.0000000
+3         0         0 0.3519786         0         0  0.2217893
+4         0         0 0.1764384         0         0 -0.2838791
+5         0         0 0.3054330         0         0  0.2811872
+
+, , b_3_2
+
+  d_y1_d_x1 d_y2_d_x1    d_y3_d_x1 d_y1_d_x2 d_y2_d_x2  d_y3_d_x2
+1         0         0 0.0226286748         0         0  0.2353483
+2         0         0 0.0004915802         0         0  0.3773680
+3         0         0 0.0009773785         0         0  0.3424694
+4         0         0 0.1851446874         0         0 -0.2120425
+5         0         0 0.0204314438         0         0  0.2419798
+
+, , R_1_2
+
+  d_y1_d_x1 d_y2_d_x1 d_y3_d_x1 d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+1         0         0         0         0         0         0
+2         0         0         0         0         0         0
+3         0         0         0         0         0         0
+4         0         0         0         0         0         0
+5         0         0         0         0         0         0
+
+, , R_1_3
+
+  d_y1_d_x1 d_y2_d_x1 d_y3_d_x1 d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+1         0         0         0         0         0         0
+2         0         0         0         0         0         0
+3         0         0         0         0         0         0
+4         0         0         0         0         0         0
+5         0         0         0         0         0         0
+
+, , R_2_3
+
+  d_y1_d_x1 d_y2_d_x1 d_y3_d_x1 d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+1         0         0         0         0         0         0
+2         0         0         0         0         0         0
+3         0         0         0         0         0         0
+4         0         0         0         0         0         0
+5         0         0         0         0         0         0
+
+> print( drop( attr( margEffUnc, "jacobian" )[ nObs, , ] ) )
+                b_1_0       b_1_1       b_1_2      b_2_0      b_2_1      b_2_2
+d_y1_d_x1 -0.08621442 0.006502259  0.08849228  0.0000000 0.00000000  0.0000000
+d_y2_d_x1  0.00000000 0.000000000  0.00000000 -0.1679077 0.03369144  0.1723439
+d_y3_d_x1  0.00000000 0.000000000  0.00000000  0.0000000 0.00000000  0.0000000
+d_y1_d_x2  0.18081872 0.000000000 -0.09292049  0.0000000 0.00000000  0.0000000
+d_y2_d_x2  0.00000000 0.000000000  0.00000000  0.3711702 0.00000000 -0.1795459
+d_y3_d_x2  0.00000000 0.000000000  0.00000000  0.0000000 0.00000000  0.0000000
+               b_3_0      b_3_1       b_3_2 R_1_2 R_1_3 R_2_3
+d_y1_d_x1  0.0000000 0.00000000  0.00000000     0     0     0
+d_y2_d_x1  0.0000000 0.00000000  0.00000000     0     0     0
+d_y3_d_x1 -0.1816930 0.08789435  0.18649349     0     0     0
+d_y1_d_x2  0.0000000 0.00000000  0.00000000     0     0     0
+d_y2_d_x2  0.0000000 0.00000000  0.00000000     0     0     0
+d_y3_d_x2  0.3005902 0.00000000 -0.03897388     0     0     0
+> summary( margEffUnc )
+                Estimate Std. error z value Pr(> z)   
+1: d_y1_d_x1   0.3229492  0.1969184   1.640 0.10100   
+1: d_y2_d_x1   0.3836677  0.2615002   1.467 0.14233   
+1: d_y3_d_x1  -0.3169556  0.2944299  -1.077 0.28170   
+1: d_y1_d_x2  -0.4419799  0.3243219  -1.363 0.17295   
+1: d_y2_d_x2  -0.4386127  0.2158525  -2.032 0.04215 * 
+1: d_y3_d_x2   0.3859215  0.1649659   2.339 0.01931 * 
+2: d_y1_d_x1   0.2429446  0.2037656   1.192 0.23315   
+2: d_y2_d_x1   0.3993798  0.3154487   1.266 0.20549   
+2: d_y3_d_x1  -0.3301446  0.3079400  -1.072 0.28367   
+2: d_y1_d_x2  -0.3876145  0.2066706  -1.876 0.06072 . 
+2: d_y2_d_x2  -0.5794260  0.1858844  -3.117 0.00183 **
+2: d_y3_d_x2   0.4689856  0.2366896   1.981 0.04754 * 
+3: d_y1_d_x1   0.2388602  0.2048984   1.166 0.24372   
+3: d_y2_d_x1   0.3982789  0.3163614   1.259 0.20805   
+3: d_y3_d_x1  -0.3297836  0.3073036  -1.073 0.28320   
+3: d_y1_d_x2  -0.0992237  0.1772196  -0.560 0.57555   
+3: d_y2_d_x2  -0.5013924  0.2694319  -1.861 0.06275 . 
+3: d_y3_d_x2   0.4433467  0.2060266   2.152 0.03141 * 
+4: d_y1_d_x1   0.4010840  0.2737181   1.465 0.14283   
+4: d_y2_d_x1   0.0557836  0.1120191   0.498 0.61850   
+4: d_y3_d_x1  -0.0842058  0.1161738  -0.725 0.46856   
+4: d_y1_d_x2  -0.4515717  0.3743460  -1.206 0.22770   
+4: d_y2_d_x2  -0.1886323  0.2443387  -0.772 0.44011   
+4: d_y3_d_x2   0.2222390  0.1546330   1.437 0.15066   
+5: d_y1_d_x1   0.1883227  0.2178782   0.864 0.38740   
+5: d_y2_d_x1   0.3691077  0.3092617   1.194 0.23267   
+5: d_y3_d_x1  -0.3165704  0.2885639  -1.097 0.27262   
+5: d_y1_d_x2  -0.0674117  0.1594292  -0.423 0.67242   
+5: d_y2_d_x2  -0.3961557  0.2129469  -1.860 0.06284 . 
+5: d_y3_d_x2   0.3847186  0.1643076   2.341 0.01921 * 
+6: d_y1_d_x1   0.3702088  0.2479950   1.493 0.13549   
+6: d_y2_d_x1   0.0348830  0.0858155   0.406 0.68438   
+6: d_y3_d_x1  -0.0614131  0.1004444  -0.611 0.54093   
+6: d_y1_d_x2  -0.4553642  0.3716033  -1.225 0.22042   
+6: d_y2_d_x2  -0.1278615  0.2191772  -0.583 0.55964   
+6: d_y3_d_x2   0.1721719  0.1590084   1.083 0.27890   
+7: d_y1_d_x1   0.0103208  0.0578293   0.178 0.85835   
+7: d_y2_d_x1   0.0220459  0.0389256   0.566 0.57115   
+7: d_y3_d_x1  -0.0531236  0.0945413  -0.562 0.57418   
+7: d_y1_d_x2  -0.0011222  0.0100135  -0.112 0.91077   
+7: d_y2_d_x2  -0.0060669  0.0202419  -0.300 0.76439   
+7: d_y3_d_x2   0.0283926  0.0809208   0.351 0.72569   
+8: d_y1_d_x1   0.4007101  0.2513387   1.594 0.11087   
+8: d_y2_d_x1   0.2907940  0.1839648   1.581 0.11395   
+8: d_y3_d_x1  -0.2596189  0.2327124  -1.116 0.26458   
+8: d_y1_d_x2  -0.4517116  0.3778331  -1.196 0.23188   
+8: d_y2_d_x2  -0.2456774  0.2895845  -0.848 0.39623   
+8: d_y3_d_x2   0.2612208  0.1389094   1.881 0.06004 . 
+9: d_y1_d_x1   0.2866645  0.1948097   1.472 0.14115   
+9: d_y2_d_x1   0.3996281  0.2934836   1.362 0.17330   
+9: d_y3_d_x1  -0.3277370  0.3066371  -1.069 0.28516   
+9: d_y1_d_x2  -0.4215114  0.2733031  -1.542 0.12300   
+9: d_y2_d_x2  -0.5108161  0.1769880  -2.886 0.00390 **
+9: d_y3_d_x2   0.4287282  0.1975437   2.170 0.02998 * 
+10: d_y1_d_x1  0.3126554  0.1950652   1.603 0.10897   
+10: d_y2_d_x1  0.3897239  0.2715355   1.435 0.15121   
+10: d_y3_d_x1 -0.3208544  0.2989128  -1.073 0.28309   
+10: d_y1_d_x2 -0.4369504  0.3108192  -1.406 0.15978   
+10: d_y2_d_x2 -0.4603049  0.2025589  -2.272 0.02306 * 
+10: d_y3_d_x2  0.3989088  0.1736170   2.298 0.02158 * 
+11: d_y1_d_x1  0.3559815  0.2109879   1.687 0.09156 . 
+11: d_y2_d_x1  0.3554683  0.2265475   1.569 0.11663   
+11: d_y3_d_x1 -0.2994680  0.2745089  -1.091 0.27531   
+11: d_y1_d_x2 -0.2051033  0.1686940  -1.216 0.22405   
+11: d_y2_d_x2 -0.6288130  0.2929760  -2.146 0.03185 * 
+11: d_y3_d_x2  0.5022490  0.2714282   1.850 0.06426 . 
+12: d_y1_d_x1  0.1219655  0.2167209   0.563 0.57359   
+12: d_y2_d_x1  0.2849034  0.2455108   1.160 0.24586   
+12: d_y3_d_x1 -0.2706624  0.2345246  -1.154 0.24846   
+12: d_y1_d_x2 -0.0345862  0.1169745  -0.296 0.76748   
+12: d_y2_d_x2 -0.2369272  0.1553557  -1.525 0.12724   
+12: d_y3_d_x2  0.2806895  0.1495365   1.877 0.06051 . 
+13: d_y1_d_x1  0.1607955  0.2212149   0.727 0.46730   
+13: d_y2_d_x1  0.3407304  0.2902802   1.174 0.24048   
+13: d_y3_d_x1 -0.3019451  0.2699648  -1.118 0.26337   
+13: d_y1_d_x2 -0.0526364  0.1443091  -0.365 0.71530   
+13: d_y2_d_x2 -0.3318477  0.1847243  -1.796 0.07242 . 
+13: d_y3_d_x2  0.3453127  0.1505415   2.294 0.02180 * 
+14: d_y1_d_x1  0.0425054  0.1438735   0.295 0.76766   
+14: d_y2_d_x1  0.1103218  0.1084386   1.017 0.30898   
+14: d_y3_d_x1 -0.1487970  0.1464968  -1.016 0.30977   
+14: d_y1_d_x2 -0.0076195  0.0439774  -0.173 0.86245   
+14: d_y2_d_x2 -0.0545820  0.0866790  -0.630 0.52889   
+14: d_y3_d_x2  0.1126242  0.1559549   0.722 0.47020   
+15: d_y1_d_x1  0.0374443  0.1341184   0.279 0.78010   
+15: d_y2_d_x1  0.0966391  0.0989303   0.977 0.32865   
+15: d_y3_d_x1 -0.1367612  0.1410156  -0.970 0.33213   
+15: d_y1_d_x2 -0.0967926  0.2198792  -0.440 0.65979   
+15: d_y2_d_x2 -0.2915499  0.2036627  -1.432 0.15228   
+15: d_y3_d_x2  0.3222879  0.1370423   2.352 0.01869 * 
+16: d_y1_d_x1  0.3364459  0.2011069   1.673 0.09433 . 
+16: d_y2_d_x1  0.3738146  0.2475442   1.510 0.13102   
+16: d_y3_d_x1 -0.3107708  0.2873205  -1.082 0.27942   
+16: d_y1_d_x2 -0.1830764  0.1737741  -1.054 0.29210   
+16: d_y2_d_x2 -0.6237778  0.3085691  -2.022 0.04323 * 
+16: d_y3_d_x2  0.5014677  0.2697076   1.859 0.06298 . 
+17: d_y1_d_x1  0.3723866  0.2229194   1.670 0.09482 . 
+17: d_y2_d_x1  0.3359156  0.2092497   1.605 0.10842   
+17: d_y3_d_x1 -0.2875002  0.2613449  -1.100 0.27130   
+17: d_y1_d_x2 -0.2257431  0.1652685  -1.366 0.17196   
+17: d_y2_d_x2 -0.6256261  0.2720114  -2.300 0.02145 * 
+17: d_y3_d_x2  0.4990113  0.2683494   1.860 0.06295 . 
+18: d_y1_d_x1  0.2663399  0.1979782   1.345 0.17853   
+18: d_y2_d_x1  0.4021326  0.3063279   1.313 0.18927   
+18: d_y3_d_x1 -0.3302751  0.3090795  -1.069 0.28526   
+18: d_y1_d_x2 -0.4069299  0.2423963  -1.679 0.09320 . 
+18: d_y2_d_x2 -0.5455404  0.1716217  -3.179 0.00148 **
+18: d_y3_d_x2  0.4490482  0.2163669   2.075 0.03795 * 
+19: d_y1_d_x1  0.4376430  0.3057075   1.432 0.15227   
+19: d_y2_d_x1  0.1696360  0.1652745   1.026 0.30471   
+19: d_y3_d_x1 -0.1789464  0.1684535  -1.062 0.28810   
+19: d_y1_d_x2 -0.3703732  0.2549995  -1.452 0.14638   
+19: d_y2_d_x2 -0.4388109  0.1792273  -2.448 0.01435 * 
+19: d_y3_d_x2  0.3891081  0.1720995   2.261 0.02376 * 
+20: d_y1_d_x1  0.2241586  0.2203192   1.017 0.30895   
+20: d_y2_d_x1  0.0042037  0.0189008   0.222 0.82400   
+20: d_y3_d_x1 -0.0149535  0.0440352  -0.340 0.73417   
+20: d_y1_d_x2 -0.0893004  0.1579533  -0.565 0.57183   
+20: d_y2_d_x2 -0.0007183  0.0053670  -0.134 0.89353   
+20: d_y3_d_x2  0.0057560  0.0254204   0.226 0.82086   
+21: d_y1_d_x1  0.1243686  0.2174053   0.572 0.56728   
+21: d_y2_d_x1  0.2889116  0.2488541   1.161 0.24565   
+21: d_y3_d_x1 -0.2730094  0.2369908  -1.152 0.24933   
+21: d_y1_d_x2 -0.2496657  0.1727348  -1.445 0.14835   
+21: d_y2_d_x2 -0.5965848  0.3369149  -1.771 0.07661 . 
+21: d_y3_d_x2  0.4914407  0.2550417   1.927 0.05399 . 
+22: d_y1_d_x1  0.0007459  0.0072977   0.102 0.91859   
+22: d_y2_d_x1  0.0006998  0.0029467   0.237 0.81229   
+22: d_y3_d_x1 -0.0057940  0.0229384  -0.253 0.80058   
+22: d_y1_d_x2 -0.0029635  0.0245156  -0.121 0.90378   
+22: d_y2_d_x2 -0.0038764  0.0136099  -0.285 0.77578   
+22: d_y3_d_x2  0.0220188  0.0686833   0.321 0.74853   
+23: d_y1_d_x1  0.4382229  0.3090674   1.418 0.15622   
+23: d_y2_d_x1  0.1426446  0.1604881   0.889 0.37410   
+23: d_y3_d_x1 -0.1589837  0.1565509  -1.016 0.30985   
+23: d_y1_d_x2 -0.3776861  0.2689458  -1.404 0.16022   
+23: d_y2_d_x2 -0.0793318  0.1962509  -0.404 0.68604   
+23: d_y3_d_x2  0.1237074  0.1478013   0.837 0.40260   
+24: d_y1_d_x1  0.0830536  0.1955292   0.425 0.67101   
+24: d_y2_d_x1  0.2095390  0.1829217   1.146 0.25200   
+24: d_y3_d_x1 -0.2234026  0.1914376  -1.167 0.24322   
+24: d_y1_d_x2 -0.1841514  0.2158454  -0.853 0.39357   
+24: d_y2_d_x2 -0.5029618  0.3122748  -1.611 0.10726   
+24: d_y3_d_x2  0.4465735  0.2031295   2.198 0.02792 * 
+25: d_y1_d_x1  0.0865904  0.1983706   0.437 0.66247   
+25: d_y2_d_x1  0.2172090  0.1891481   1.148 0.25082   
+25: d_y3_d_x1 -0.2285086  0.1954931  -1.169 0.24245   
+25: d_y1_d_x2 -0.1901942  0.2126762  -0.894 0.37117   
+25: d_y2_d_x2 -0.5140301  0.3173040  -1.620 0.10523   
+25: d_y3_d_x2  0.4522409  0.2089671   2.164 0.03045 * 
+26: d_y1_d_x1  0.4378383  0.3091474   1.416 0.15669   
+26: d_y2_d_x1  0.1365703  0.1589866   0.859 0.39034   
+26: d_y3_d_x1 -0.1543408  0.1539501  -1.003 0.31608   
+26: d_y1_d_x2 -0.3723857  0.2610610  -1.426 0.15374   
+26: d_y2_d_x2 -0.0744062  0.1894584  -0.393 0.69452   
+26: d_y3_d_x2  0.1186028  0.1465188   0.809 0.41824   
+27: d_y1_d_x1  0.1729600  0.2202574   0.785 0.43230   
+27: d_y2_d_x1  0.3543882  0.3000078   1.181 0.23750   
+27: d_y3_d_x1 -0.3091116  0.2788965  -1.108 0.26772   
+27: d_y1_d_x2 -0.0589571  0.1511973  -0.390 0.69658   
+27: d_y2_d_x2 -0.3607121  0.1966482  -1.834 0.06661 . 
+27: d_y3_d_x2  0.3633744  0.1553877   2.339 0.01936 * 
+28: d_y1_d_x1  0.0257894  0.1073759   0.240 0.81019   
+28: d_y2_d_x1  0.0644472  0.0761722   0.846 0.39751   
+28: d_y3_d_x1 -0.1055972  0.1270193  -0.831 0.40578   
+28: d_y1_d_x2 -0.0038331  0.0265637  -0.144 0.88527   
+28: d_y2_d_x2 -0.0256483  0.0557081  -0.460 0.64522   
+28: d_y3_d_x2  0.0701960  0.1321063   0.531 0.59517   
+29: d_y1_d_x1  0.3029664  0.1942862   1.559 0.11891   
+29: d_y2_d_x1  0.3943070  0.2803474   1.406 0.15958   
+29: d_y3_d_x1 -0.3239068  0.3023941  -1.071 0.28411   
+29: d_y1_d_x2 -0.4316377  0.2971846  -1.452 0.14638   
+29: d_y2_d_x2 -0.4798749  0.1912621  -2.509 0.01211 * 
+29: d_y3_d_x2  0.4105213  0.1822638   2.252 0.02430 * 
+30: d_y1_d_x1  0.2118732  0.2124133   0.997 0.31854   
+30: d_y2_d_x1  0.3863182  0.3169271   1.219 0.22286   
+30: d_y3_d_x1 -0.3247953  0.2998024  -1.083 0.27865   
+30: d_y1_d_x2 -0.0814410  0.1691615  -0.481 0.63020   
+30: d_y2_d_x2 -0.4476780  0.2396874  -1.868 0.06180 . 
+30: d_y3_d_x2  0.4142648  0.1822614   2.273 0.02303 * 
+31: d_y1_d_x1  0.2527667  0.2011528   1.257 0.20890   
+31: d_y2_d_x1  0.4012708  0.3124087   1.284 0.19899   
+31: d_y3_d_x1 -0.3305991  0.3089367  -1.070 0.28457   
+31: d_y1_d_x2 -0.1091608  0.1794793  -0.608 0.54305   
+31: d_y2_d_x2 -0.5263905  0.2833821  -1.858 0.06324 . 
+31: d_y3_d_x2  0.4562932  0.2183185   2.090 0.03661 * 
+32: d_y1_d_x1  0.3573774  0.2118731   1.687 0.09165 . 
+32: d_y2_d_x1  0.3539601  0.2250456   1.573 0.11576   
+32: d_y3_d_x1 -0.2985441  0.2734764  -1.092 0.27498   
+32: d_y1_d_x2 -0.4535457  0.3612404  -1.256 0.20929   
+32: d_y2_d_x2 -0.3597567  0.2601656  -1.383 0.16673   
+32: d_y3_d_x2  0.3373256  0.1429065   2.360 0.01825 * 
+33: d_y1_d_x1  0.1516903  0.2212870   0.685 0.49303   
+33: d_y2_d_x1  0.3293285  0.2816236   1.169 0.24225   
+33: d_y3_d_x1 -0.2958065  0.2625654  -1.127 0.25991   
+33: d_y1_d_x2 -0.0481163  0.1387287  -0.347 0.72871   
+33: d_y2_d_x2 -0.3098804  0.1767155  -1.754 0.07951 . 
+33: d_y3_d_x2  0.3311181  0.1483447   2.232 0.02561 * 
+34: d_y1_d_x1  0.4109694  0.2640717   1.556 0.11964   
+34: d_y2_d_x1  0.2693770  0.1773855   1.519 0.12886   
+34: d_y3_d_x1 -0.2461064  0.2199809  -1.119 0.26324   
+34: d_y1_d_x2 -0.2871005  0.1750310  -1.640 0.10095   
+34: d_y2_d_x2 -0.5780745  0.1938129  -2.983 0.00286 **
+34: d_y3_d_x2  0.4700927  0.2378398   1.977 0.04810 * 
+35: d_y1_d_x1  0.1897255  0.2176062   0.872 0.38328   
+35: d_y2_d_x1  0.3703130  0.3099381   1.195 0.23217   
+35: d_y3_d_x1 -0.3171667  0.2893553  -1.096 0.27303   
+35: d_y1_d_x2 -0.0682106  0.1598567  -0.427 0.66960   
+35: d_y2_d_x2 -0.3993267  0.2143416  -1.863 0.06246 . 
+35: d_y3_d_x2  0.3865862  0.1652524   2.339 0.01932 * 
+36: d_y1_d_x1  0.3438410  0.2043023   1.683 0.09237 . 
+36: d_y2_d_x1  0.3674585  0.2396459   1.533 0.12519   
+36: d_y3_d_x1 -0.3068357  0.2828260  -1.085 0.27797   
+36: d_y1_d_x2 -0.1911310  0.1717706  -1.113 0.26583   
+36: d_y2_d_x2 -0.6266940  0.3037220  -2.063 0.03908 * 
+36: d_y3_d_x2  0.5022961  0.2709616   1.854 0.06377 . 
+37: d_y1_d_x1  0.4348121  0.3071966   1.415 0.15695   
+37: d_y2_d_x1  0.1159358  0.1523350   0.761 0.44662   
+37: d_y3_d_x1 -0.1380751  0.1452016  -0.951 0.34164   
+37: d_y1_d_x2 -0.4128084  0.3171966  -1.301 0.19311   
+37: d_y2_d_x2 -0.3345518  0.2259999  -1.480 0.13879   
+37: d_y3_d_x2  0.3245445  0.1492227   2.175 0.02964 * 
+38: d_y1_d_x1  0.3693685  0.2204735   1.675 0.09387 . 
+38: d_y2_d_x1  0.3398245  0.2123516   1.600 0.10953   
+38: d_y3_d_x1 -0.2898933  0.2639391  -1.098 0.27206   
+38: d_y1_d_x2 -0.4552948  0.3700358  -1.230 0.21854   
+38: d_y2_d_x2 -0.3300386  0.2728980  -1.209 0.22652   
+38: d_y3_d_x2  0.3182879  0.1388452   2.292 0.02188 * 
+39: d_y1_d_x1  0.1625955  0.2211322   0.735 0.46217   
+39: d_y2_d_x1  0.3428643  0.2918528   1.175 0.24008   
+39: d_y3_d_x1 -0.3030787  0.2713560  -1.117 0.26404   
+39: d_y1_d_x2 -0.3016233  0.1438290  -2.097 0.03598 * 
+39: d_y2_d_x2 -0.6275330  0.3061505  -2.050 0.04039 * 
+39: d_y3_d_x2  0.5024991  0.2713680   1.852 0.06407 . 
+40: d_y1_d_x1  0.4310083  0.3036672   1.419 0.15580   
+40: d_y2_d_x1  0.1021310  0.1462658   0.698 0.48502   
+40: d_y3_d_x1 -0.1266963  0.1392940  -0.910 0.36305   
+40: d_y1_d_x2 -0.3371781  0.2125041  -1.587 0.11258   
+40: d_y2_d_x2 -0.0488786  0.1471075  -0.332 0.73969   
+40: d_y3_d_x2  0.0900131  0.1364710   0.660 0.50953   
+41: d_y1_d_x1  0.4383603  0.3088804   1.419 0.15584   
+41: d_y2_d_x1  0.1464601  0.1613405   0.908 0.36400   
+41: d_y3_d_x1 -0.1618696  0.1581962  -1.023 0.30620   
+41: d_y1_d_x2 -0.3808958  0.2737765  -1.391 0.16414   
+41: d_y2_d_x2 -0.0824913  0.2005076  -0.411 0.68077   
+41: d_y3_d_x2  0.1269258  0.1482204   0.856 0.39181   
+42: d_y1_d_x1  0.3938190  0.2435193   1.617 0.10584   
+42: d_y2_d_x1  0.3033933  0.1892822   1.603 0.10897   
+42: d_y3_d_x1 -0.2674705  0.2404638  -1.112 0.26600   
+42: d_y1_d_x2 -0.4537894  0.3785496  -1.199 0.23062   
+42: d_y2_d_x2 -0.2652456  0.2885959  -0.919 0.35805   
+42: d_y3_d_x2  0.2749274  0.1376428   1.997 0.04578 * 
+43: d_y1_d_x1  0.3189542  0.1960673   1.627 0.10379   
+43: d_y2_d_x1  0.3861652  0.2654683   1.455 0.14576   
+43: d_y3_d_x1 -0.3185505  0.2962658  -1.075 0.28228   
+43: d_y1_d_x2 -0.4401057  0.3190844  -1.379 0.16781   
+43: d_y2_d_x2 -0.4471386  0.2105828  -2.123 0.03373 * 
+43: d_y3_d_x2  0.3910420  0.1682115   2.325 0.02009 * 
+44: d_y1_d_x1  0.0971787  0.2056705   0.472 0.63657   
+44: d_y2_d_x1  0.2391890  0.2072537   1.154 0.24846   
+44: d_y3_d_x1 -0.2427451  0.2075624  -1.170 0.24220   
+44: d_y1_d_x2 -0.0247164  0.0967978  -0.255 0.79846   
+44: d_y2_d_x2 -0.1761939  0.1405686  -1.253 0.21005   
+44: d_y3_d_x2  0.2336972  0.1572143   1.486 0.13715   
+45: d_y1_d_x1  0.4025241  0.2750818   1.463 0.14339   
+45: d_y2_d_x1  0.0571279  0.1134119   0.504 0.61446   
+45: d_y3_d_x1 -0.0855674  0.1170016  -0.731 0.46457   
+45: d_y1_d_x2 -0.4510042  0.3739716  -1.206 0.22782   
+45: d_y2_d_x2 -0.1923211  0.2451119  -0.785 0.43267   
+45: d_y3_d_x2  0.2250886  0.1542001   1.460 0.14437   
+46: d_y1_d_x1  0.1023270  0.2086179   0.490 0.62378   
+46: d_y2_d_x1  0.2493443  0.2157179   1.156 0.24773   
+46: d_y3_d_x1 -0.2491363  0.2133487  -1.168 0.24291   
+46: d_y1_d_x2 -0.2160482  0.1967208  -1.098 0.27210   
+46: d_y2_d_x2 -0.5558719  0.3329339  -1.670 0.09500 . 
+46: d_y3_d_x2  0.4728836  0.2319021   2.039 0.04143 * 
+47: d_y1_d_x1  0.1866549  0.2239000   0.834 0.40448   
+47: d_y2_d_x1  0.0021906  0.0112184   0.195 0.84518   
+47: d_y3_d_x1 -0.0097002  0.0326790  -0.297 0.76660   
+47: d_y1_d_x2 -0.0664679  0.1464426  -0.454 0.64991   
+47: d_y2_d_x2 -0.0003165  0.0026318  -0.120 0.90429   
+47: d_y3_d_x2  0.0033819  0.0168399   0.201 0.84083   
+48: d_y1_d_x1  0.3664196  0.2453495   1.493 0.13532   
+48: d_y2_d_x1  0.0330393  0.0830093   0.398 0.69062   
+48: d_y3_d_x1 -0.0592154  0.0986854  -0.600 0.54848   
+48: d_y1_d_x2 -0.2179729  0.1421666  -1.533 0.12522   
+48: d_y2_d_x2 -0.0103702  0.0485413  -0.214 0.83083   
+48: d_y3_d_x2  0.0326734  0.0839788   0.389 0.69723   
+49: d_y1_d_x1  0.1856984  0.2183644   0.850 0.39510   
+49: d_y2_d_x1  0.3667908  0.3079205   1.191 0.23358   
+49: d_y3_d_x1 -0.3154174  0.2870419  -1.099 0.27183   
+49: d_y1_d_x2 -0.0659294  0.1580396  -0.417 0.67655   
+49: d_y2_d_x2 -0.3901922  0.2099946  -1.858 0.06315 . 
+49: d_y3_d_x2  0.3811881  0.1625644   2.345 0.01904 * 
+50: d_y1_d_x1  0.0417272  0.1424363   0.293 0.76956   
+50: d_y2_d_x1  0.1082331  0.1069829   1.012 0.31169   
+50: d_y3_d_x1 -0.1469973  0.1456618  -1.009 0.31289   
+50: d_y1_d_x2 -0.1058940  0.2239865  -0.473 0.63638   
+50: d_y2_d_x2 -0.3177685  0.2162648  -1.469 0.14174   
+50: d_y3_d_x2  0.3395679  0.1387389   2.448 0.01438 * 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+> # now with explicitly specifying dummy variables
+> margEffUncD <- margEff( estResultBFGS, calcVCov = TRUE, returnJacobian = TRUE,
++    dummyVars = c( "x1" ) )
+> all.equal( margEffUncD, margEffUnc )
+[1] TRUE
+> # now with seemingly no dummy variables
+> margEffUncD0 <- margEff( estResultBFGS, calcVCov = TRUE, returnJacobian = TRUE,
++    dummyVars = NULL )
+> summary( margEffUncD0 )
+                Estimate Std. error z value Pr(> z)   
+1: d_y1_d_x1   0.4492866  0.3540597   1.269 0.20446   
+1: d_y2_d_x1   0.2935576  0.1311406   2.238 0.02519 * 
+1: d_y3_d_x1  -0.2616568  0.1797334  -1.456 0.14545   
+1: d_y1_d_x2  -0.4419799  0.3243219  -1.363 0.17295   
+1: d_y2_d_x2  -0.4386127  0.2158525  -2.032 0.04215 * 
+1: d_y3_d_x2   0.3859215  0.1649659   2.339 0.01931 * 
+2: d_y1_d_x1   0.3940224  0.3132860   1.258 0.20850   
+2: d_y2_d_x1   0.3878021  0.2306484   1.681 0.09269 . 
+2: d_y3_d_x1  -0.3179747  0.2736354  -1.162 0.24522   
+2: d_y1_d_x2  -0.3876145  0.2066706  -1.876 0.06072 . 
+2: d_y2_d_x2  -0.5794260  0.1858844  -3.117 0.00183 **
+2: d_y3_d_x2   0.4689856  0.2366896   1.981 0.04754 * 
+3: d_y1_d_x1   0.1008641  0.1922854   0.525 0.59989   
+3: d_y2_d_x1   0.3355752  0.2466029   1.361 0.17358   
+3: d_y3_d_x1  -0.3005914  0.2316189  -1.298 0.19436   
+3: d_y1_d_x2  -0.0992237  0.1772196  -0.560 0.57555   
+3: d_y2_d_x2  -0.5013924  0.2694319  -1.861 0.06275 . 
+3: d_y3_d_x2   0.4433467  0.2060266   2.152 0.03141 * 
+4: d_y1_d_x1   0.4590369  0.3460873   1.326 0.18472   
+4: d_y2_d_x1   0.1262490  0.1951262   0.647 0.51762   
+4: d_y3_d_x1  -0.1506792  0.2145244  -0.702 0.48244   
+4: d_y1_d_x2  -0.4515717  0.3743460  -1.206 0.22770   
+4: d_y2_d_x2  -0.1886323  0.2443387  -0.772 0.44011   
+4: d_y3_d_x2   0.2222390  0.1546330   1.437 0.15066   
+5: d_y1_d_x1   0.0685262  0.1718947   0.399 0.69015   
+5: d_y2_d_x1   0.2651417  0.1706556   1.554 0.12026   
+5: d_y3_d_x1  -0.2608412  0.1682214  -1.551 0.12100   
+5: d_y1_d_x2  -0.0674117  0.1594292  -0.423 0.67242   
+5: d_y2_d_x2  -0.3961557  0.2129469  -1.860 0.06284 . 
+5: d_y3_d_x2   0.3847186  0.1643076   2.341 0.01921 * 
+6: d_y1_d_x1   0.4628921  0.3679524   1.258 0.20838   
+6: d_y2_d_x1   0.0855760  0.1633725   0.524 0.60041   
+6: d_y3_d_x1  -0.1167335  0.1854189  -0.630 0.52898   
+6: d_y1_d_x2  -0.4553642  0.3716033  -1.225 0.22042   
+6: d_y2_d_x2  -0.1278615  0.2191772  -0.583 0.55964   
+6: d_y3_d_x2   0.1721719  0.1590084   1.083 0.27890   
+7: d_y1_d_x1   0.0011408  0.0104205   0.109 0.91283   
+7: d_y2_d_x1   0.0040605  0.0127622   0.318 0.75036   
+7: d_y3_d_x1  -0.0192503  0.0522359  -0.369 0.71248   
+7: d_y1_d_x2  -0.0011222  0.0100135  -0.112 0.91077   
+7: d_y2_d_x2  -0.0060669  0.0202419  -0.300 0.76439   
+7: d_y3_d_x2   0.0283926  0.0809208   0.351 0.72569   
+8: d_y1_d_x1   0.4591792  0.3547693   1.294 0.19556   
+8: d_y2_d_x1   0.1644286  0.1607414   1.023 0.30634   
+8: d_y3_d_x1  -0.1771091  0.1040865  -1.702 0.08884 . 
+8: d_y1_d_x2  -0.4517116  0.3778331  -1.196 0.23188   
+8: d_y2_d_x2  -0.2456774  0.2895845  -0.848 0.39623   
+8: d_y3_d_x2   0.2612208  0.1389094   1.881 0.06004 . 
+9: d_y1_d_x1   0.4284797  0.3354146   1.277 0.20144   
+9: d_y2_d_x1   0.3418824  0.1591856   2.148 0.03174 * 
+9: d_y3_d_x1  -0.2906800  0.2235404  -1.300 0.19348   
+9: d_y1_d_x2  -0.4215114  0.2733031  -1.542 0.12300   
+9: d_y2_d_x2  -0.5108161  0.1769880  -2.886 0.00390 **
+9: d_y3_d_x2   0.4287282  0.1975437   2.170 0.02998 * 
+10: d_y1_d_x1  0.4441739  0.3492171   1.272 0.20340   
+10: d_y2_d_x1  0.3080759  0.1350329   2.281 0.02252 * 
+10: d_y3_d_x1 -0.2704623  0.1920952  -1.408 0.15914   
+10: d_y1_d_x2 -0.4369504  0.3108192  -1.406 0.15978   
+10: d_y2_d_x2 -0.4603049  0.2025589  -2.272 0.02306 * 
+10: d_y3_d_x2  0.3989088  0.1736170   2.298 0.02158 * 
+11: d_y1_d_x1  0.2084940  0.1733247   1.203 0.22901   
+11: d_y2_d_x1  0.4208561  0.3524522   1.194 0.23245   
+11: d_y3_d_x1 -0.3405275  0.3419437  -0.996 0.31932   
+11: d_y1_d_x2 -0.2051033  0.1686940  -1.216 0.22405   
+11: d_y2_d_x2 -0.6288130  0.2929760  -2.146 0.03185 * 
+11: d_y3_d_x2  0.5022490  0.2714282   1.850 0.06426 . 
+12: d_y1_d_x1  0.0351580  0.1247792   0.282 0.77813   
+12: d_y2_d_x1  0.1585722  0.0918439   1.727 0.08425 . 
+12: d_y3_d_x1 -0.1903089  0.1047009  -1.818 0.06912 . 
+12: d_y1_d_x2 -0.0345862  0.1169745  -0.296 0.76748   
+12: d_y2_d_x2 -0.2369272  0.1553557  -1.525 0.12724   
+12: d_y3_d_x2  0.2806895  0.1495365   1.877 0.06051 . 
+13: d_y1_d_x1  0.0535066  0.1549265   0.345 0.72982   
+13: d_y2_d_x1  0.2221012  0.1321527   1.681 0.09283 . 
+13: d_y3_d_x1 -0.2341238  0.1364993  -1.715 0.08631 . 
+13: d_y1_d_x2 -0.0526364  0.1443091  -0.365 0.71530   
+13: d_y2_d_x2 -0.3318477  0.1847243  -1.796 0.07242 . 
+13: d_y3_d_x2  0.3453127  0.1505415   2.294 0.02180 * 
+14: d_y1_d_x1  0.0077455  0.0462115   0.168 0.86689   
+14: d_y2_d_x1  0.0365310  0.0506660   0.721 0.47090   
+14: d_y3_d_x1 -0.0763598  0.0949354  -0.804 0.42120   
+14: d_y1_d_x2 -0.0076195  0.0439774  -0.173 0.86245   
+14: d_y2_d_x2 -0.0545820  0.0866790  -0.630 0.52889   
+14: d_y3_d_x2  0.1126242  0.1559549   0.722 0.47020   
+15: d_y1_d_x1  0.0983928  0.2668037   0.369 0.71229   
+15: d_y2_d_x1  0.1951304  0.2397581   0.814 0.41572   
+15: d_y3_d_x1 -0.2185129  0.2611210  -0.837 0.40269   
+15: d_y1_d_x2 -0.0967926  0.2198792  -0.440 0.65979   
+15: d_y2_d_x2 -0.2915499  0.2036627  -1.432 0.15228   
+15: d_y3_d_x2  0.3222879  0.1370423   2.352 0.01869 * 
+16: d_y1_d_x1  0.1861029  0.1838931   1.012 0.31153   
+16: d_y2_d_x1  0.4174861  0.3476044   1.201 0.22974   
+16: d_y3_d_x1 -0.3399978  0.3303216  -1.029 0.30334   
+16: d_y1_d_x2 -0.1830764  0.1737741  -1.054 0.29210   
+16: d_y2_d_x2 -0.6237778  0.3085691  -2.022 0.04323 * 
+16: d_y3_d_x2  0.5014677  0.2697076   1.859 0.06298 . 
+17: d_y1_d_x1  0.2294750  0.1626257   1.411 0.15823   
+17: d_y2_d_x1  0.4187232  0.3512515   1.192 0.23323   
+17: d_y3_d_x1 -0.3383323  0.3486058  -0.971 0.33178   
+17: d_y1_d_x2 -0.2257431  0.1652685  -1.366 0.17196   
+17: d_y2_d_x2 -0.6256261  0.2720114  -2.300 0.02145 * 
+17: d_y3_d_x2  0.4990113  0.2683494   1.860 0.06295 . 
+18: d_y1_d_x1  0.4136571  0.3245288   1.275 0.20244   
+18: d_y2_d_x1  0.3651229  0.1892800   1.929 0.05373 . 
+18: d_y3_d_x1 -0.3044570  0.2474695  -1.230 0.21859   
+18: d_y1_d_x2 -0.4069299  0.2423963  -1.679 0.09320 . 
+18: d_y2_d_x2 -0.5455404  0.1716217  -3.179 0.00148 **
+18: d_y3_d_x2  0.4490482  0.2163669   2.075 0.03795 * 
+19: d_y1_d_x1  0.3764961  0.1937626   1.943 0.05201 . 
+19: d_y2_d_x1  0.2936902  0.2677201   1.097 0.27264   
+19: d_y3_d_x1 -0.2638173  0.3075951  -0.858 0.39107   
+19: d_y1_d_x2 -0.3703732  0.2549995  -1.452 0.14638   
+19: d_y2_d_x2 -0.4388109  0.1792273  -2.448 0.01435 * 
+19: d_y3_d_x2  0.3891081  0.1720995   2.261 0.02376 * 
+20: d_y1_d_x1  0.0907767  0.1780308   0.510 0.61013   
+20: d_y2_d_x1  0.0004808  0.0035019   0.137 0.89080   
+20: d_y3_d_x1 -0.0039026  0.0168379  -0.232 0.81671   
+20: d_y1_d_x2 -0.0893004  0.1579533  -0.565 0.57183   
+20: d_y2_d_x2 -0.0007183  0.0053670  -0.134 0.89353   
+20: d_y3_d_x2  0.0057560  0.0254204   0.226 0.82086   
+21: d_y1_d_x1  0.2537931  0.3084248   0.823 0.41058   
+21: d_y2_d_x1  0.3992862  0.3938352   1.014 0.31066   
+21: d_y3_d_x1 -0.3331994  0.3472876  -0.959 0.33734   
+21: d_y1_d_x2 -0.2496657  0.1727348  -1.445 0.14835   
+21: d_y2_d_x2 -0.5965848  0.3369149  -1.771 0.07661 . 
+21: d_y3_d_x2  0.4914407  0.2550417   1.927 0.05399 . 
+22: d_y1_d_x1  0.0030125  0.0260178   0.116 0.90782   
+22: d_y2_d_x1  0.0025944  0.0095680   0.271 0.78627   
+22: d_y3_d_x1 -0.0149288  0.0516028  -0.289 0.77235   
+22: d_y1_d_x2 -0.0029635  0.0245156  -0.121 0.90378   
+22: d_y2_d_x2 -0.0038764  0.0136099  -0.285 0.77578   
+22: d_y3_d_x2  0.0220188  0.0686833   0.321 0.74853   
+23: d_y1_d_x1  0.3839298  0.2322611   1.653 0.09833 . 
+23: d_y2_d_x1  0.0530957  0.1200950   0.442 0.65841   
+23: d_y3_d_x1 -0.0838742  0.0922399  -0.909 0.36319   
+23: d_y1_d_x2 -0.3776861  0.2689458  -1.404 0.16022   
+23: d_y2_d_x2 -0.0793318  0.1962509  -0.404 0.68604   
+23: d_y3_d_x2  0.1237074  0.1478013   0.837 0.40260   
+24: d_y1_d_x1  0.1871958  0.3116447   0.601 0.54806   
+24: d_y2_d_x1  0.3366256  0.3680215   0.915 0.36035   
+24: d_y3_d_x1 -0.3027792  0.3293934  -0.919 0.35799   
+24: d_y1_d_x2 -0.1841514  0.2158454  -0.853 0.39357   
+24: d_y2_d_x2 -0.5029618  0.3122748  -1.611 0.10726   
+24: d_y3_d_x2  0.4465735  0.2031295   2.198 0.02792 * 
+25: d_y1_d_x1  0.1933384  0.3121410   0.619 0.53566   
+25: d_y2_d_x1  0.3440335  0.3731768   0.922 0.35658   
+25: d_y3_d_x1 -0.3066217  0.3323178  -0.923 0.35618   
+25: d_y1_d_x2 -0.1901942  0.2126762  -0.894 0.37117   
+25: d_y2_d_x2 -0.5140301  0.3173040  -1.620 0.10523   
+25: d_y3_d_x2  0.4522409  0.2089671   2.164 0.03045 * 
+26: d_y1_d_x1  0.3785419  0.2252087   1.681 0.09279 . 
+26: d_y2_d_x1  0.0497991  0.1162620   0.428 0.66841   
+26: d_y3_d_x1 -0.0804133  0.0915366  -0.878 0.37968   
+26: d_y1_d_x2 -0.3723857  0.2610610  -1.426 0.15374   
+26: d_y2_d_x2 -0.0744062  0.1894584  -0.393 0.69452   
+26: d_y3_d_x2  0.1186028  0.1465188   0.809 0.41824   
+27: d_y1_d_x1  0.0599317  0.1626478   0.368 0.71252   
+27: d_y2_d_x1  0.2414198  0.1485489   1.625 0.10412   
+27: d_y3_d_x1 -0.2463698  0.1499776  -1.643 0.10044   
+27: d_y1_d_x2 -0.0589571  0.1511973  -0.390 0.69658   
+27: d_y2_d_x2 -0.3607121  0.1966482  -1.834 0.06661 . 
+27: d_y3_d_x2  0.3633744  0.1553877   2.339 0.01936 * 
+28: d_y1_d_x1  0.0038965  0.0277859   0.140 0.88848   
+28: d_y2_d_x1  0.0171661  0.0338585   0.507 0.61216   
+28: d_y3_d_x1 -0.0475933  0.0827103  -0.575 0.56501   
+28: d_y1_d_x2 -0.0038331  0.0265637  -0.144 0.88527   
+28: d_y2_d_x2 -0.0256483  0.0557081  -0.460 0.64522   
+28: d_y3_d_x2  0.0701960  0.1321063   0.531 0.59517   
+29: d_y1_d_x1  0.4387734  0.3441602   1.275 0.20234   
+29: d_y2_d_x1  0.3211739  0.1417537   2.266 0.02347 * 
+29: d_y3_d_x1 -0.2783356  0.2038223  -1.366 0.17207   
+29: d_y1_d_x2 -0.4316377  0.2971846  -1.452 0.14638   
+29: d_y2_d_x2 -0.4798749  0.1912621  -2.509 0.01211 * 
+29: d_y3_d_x2  0.4105213  0.1822638   2.252 0.02430 * 
+30: d_y1_d_x1  0.0827874  0.1829991   0.452 0.65099   
+30: d_y2_d_x1  0.2996249  0.2062733   1.453 0.14635   
+30: d_y3_d_x1 -0.2808737  0.1977175  -1.421 0.15544   
+30: d_y1_d_x2 -0.0814410  0.1691615  -0.481 0.63020   
+30: d_y2_d_x2 -0.4476780  0.2396874  -1.868 0.06180 . 
+30: d_y3_d_x2  0.4142648  0.1822614   2.273 0.02303 * 
+31: d_y1_d_x1  0.1109654  0.1949650   0.569 0.56925   
+31: d_y2_d_x1  0.3523061  0.2665386   1.322 0.18624   
+31: d_y3_d_x1 -0.3093692  0.2484722  -1.245 0.21310   
+31: d_y1_d_x2 -0.1091608  0.1794793  -0.608 0.54305   
+31: d_y2_d_x2 -0.5263905  0.2833821  -1.858 0.06324 . 
+31: d_y3_d_x2  0.4562932  0.2183185   2.090 0.03661 * 
+32: d_y1_d_x1  0.4610436  0.3649767   1.263 0.20651   
+32: d_y2_d_x1  0.2407803  0.1384474   1.739 0.08201 . 
+32: d_y3_d_x1 -0.2287085  0.1405512  -1.627 0.10369   
+32: d_y1_d_x2 -0.4535457  0.3612404  -1.256 0.20929   
+32: d_y2_d_x2 -0.3597567  0.2601656  -1.383 0.16673   
+32: d_y3_d_x2  0.3373256  0.1429065   2.360 0.01825 * 
+33: d_y1_d_x1  0.0489118  0.1487038   0.329 0.74222   
+33: d_y2_d_x1  0.2073988  0.1208362   1.716 0.08610 . 
+33: d_y3_d_x1 -0.2244998  0.1272792  -1.764 0.07776 . 
+33: d_y1_d_x2 -0.0481163  0.1387287  -0.347 0.72871   
+33: d_y2_d_x2 -0.3098804  0.1767155  -1.754 0.07951 . 
+33: d_y3_d_x2  0.3311181  0.1483447   2.232 0.02561 * 
+34: d_y1_d_x1  0.2918467  0.1402138   2.081 0.03739 * 
+34: d_y2_d_x1  0.3868975  0.3240208   1.194 0.23246   
+34: d_y3_d_x1 -0.3187254  0.3475035  -0.917 0.35905   
+34: d_y1_d_x2 -0.2871005  0.1750310  -1.640 0.10095   
+34: d_y2_d_x2 -0.5780745  0.1938129  -2.983 0.00286 **
+34: d_y3_d_x2  0.4700927  0.2378398   1.977 0.04810 * 
+35: d_y1_d_x1  0.0693382  0.1724062   0.402 0.68755   
+35: d_y2_d_x1  0.2672640  0.1725973   1.548 0.12151   
+35: d_y3_d_x1 -0.2621075  0.1699692  -1.542 0.12305   
+35: d_y1_d_x2 -0.0682106  0.1598567  -0.427 0.66960   
+35: d_y2_d_x2 -0.3993267  0.2143416  -1.863 0.06246 . 
+35: d_y3_d_x2  0.3865862  0.1652524   2.339 0.01932 * 
+36: d_y1_d_x1  0.1942907  0.1801413   1.079 0.28079   
+36: d_y2_d_x1  0.4194379  0.3501349   1.198 0.23094   
+36: d_y3_d_x1 -0.3405594  0.3351504  -1.016 0.30956   
+36: d_y1_d_x2 -0.1911310  0.1717706  -1.113 0.26583   
+36: d_y2_d_x2 -0.6266940  0.3037220  -2.063 0.03908 * 
+36: d_y3_d_x2  0.5022961  0.2709616   1.854 0.06377 . 
+37: d_y1_d_x1  0.4196328  0.2610018   1.608 0.10788   
+37: d_y2_d_x1  0.2239110  0.2400895   0.933 0.35102   
+37: d_y3_d_x1 -0.2200429  0.2714789  -0.811 0.41763   
+37: d_y1_d_x2 -0.4128084  0.3171966  -1.301 0.19311   
+37: d_y2_d_x2 -0.3345518  0.2259999  -1.480 0.13879   
+37: d_y3_d_x2  0.3245445  0.1492227   2.175 0.02964 * 
+38: d_y1_d_x1  0.4628216  0.3657665   1.265 0.20575   
+38: d_y2_d_x1  0.2208904  0.1452555   1.521 0.12833   
+38: d_y3_d_x1 -0.2158009  0.1284410  -1.680 0.09293 . 
+38: d_y1_d_x2 -0.4552948  0.3700358  -1.230 0.21854   
+38: d_y2_d_x2 -0.3300386  0.2728980  -1.209 0.22652   
+38: d_y3_d_x2  0.3182879  0.1388452   2.292 0.02188 * 
+39: d_y1_d_x1  0.3066097  0.3008442   1.019 0.30812   
+39: d_y2_d_x1  0.4199995  0.3659529   1.148 0.25110   
+39: d_y3_d_x1 -0.3406970  0.3388701  -1.005 0.31471   
+39: d_y1_d_x2 -0.3016233  0.1438290  -2.097 0.03598 * 
+39: d_y2_d_x2 -0.6275330  0.3061505  -2.050 0.04039 * 
+39: d_y3_d_x2  0.5024991  0.2713680   1.852 0.06407 . 
+40: d_y1_d_x1  0.3427522  0.1856809   1.846 0.06490 . 
+40: d_y2_d_x1  0.0327138  0.0916114   0.357 0.72102   
+40: d_y3_d_x1 -0.0610294  0.0860418  -0.709 0.47814   
+40: d_y1_d_x2 -0.3371781  0.2125041  -1.587 0.11258   
+40: d_y2_d_x2 -0.0488786  0.1471075  -0.332 0.73969   
+40: d_y3_d_x2  0.0900131  0.1364710   0.660 0.50953   
+41: d_y1_d_x1  0.3871927  0.2366496   1.636 0.10181   
+41: d_y2_d_x1  0.0552104  0.1224868   0.451 0.65217   
+41: d_y3_d_x1 -0.0860563  0.0924706  -0.931 0.35204   
+41: d_y1_d_x2 -0.3808958  0.2737765  -1.391 0.16414   
+41: d_y2_d_x2 -0.0824913  0.2005076  -0.411 0.68077   
+41: d_y3_d_x2  0.1269258  0.1482204   0.856 0.39181   
+42: d_y1_d_x1  0.4612913  0.3593365   1.284 0.19924   
+42: d_y2_d_x1  0.1775253  0.1583049   1.121 0.26211   
+42: d_y3_d_x1 -0.1864022  0.1083052  -1.721 0.08524 . 
+42: d_y1_d_x2 -0.4537894  0.3785496  -1.199 0.23062   
+42: d_y2_d_x2 -0.2652456  0.2885959  -0.919 0.35805   
+42: d_y3_d_x2  0.2749274  0.1376428   1.997 0.04578 * 
+43: d_y1_d_x1  0.4473813  0.3521982   1.270 0.20399   
+43: d_y2_d_x1  0.2992639  0.1322582   2.263 0.02365 * 
+43: d_y3_d_x1 -0.2651285  0.1845443  -1.437 0.15081   
+43: d_y1_d_x2 -0.4401057  0.3190844  -1.379 0.16781   
+43: d_y2_d_x2 -0.4471386  0.2105828  -2.123 0.03373 * 
+43: d_y3_d_x2  0.3910420  0.1682115   2.325 0.02009 * 
+44: d_y1_d_x1  0.0251250  0.1028008   0.244 0.80692   
+44: d_y2_d_x1  0.1179242  0.0773983   1.524 0.12761   
+44: d_y3_d_x1 -0.1584480  0.0970460  -1.633 0.10253   
+44: d_y1_d_x2 -0.0247164  0.0967978  -0.255 0.79846   
+44: d_y2_d_x2 -0.1761939  0.1405686  -1.253 0.21005   
+44: d_y3_d_x2  0.2336972  0.1572143   1.486 0.13715   
+45: d_y1_d_x1  0.4584600  0.3445850   1.330 0.18336   
+45: d_y2_d_x1  0.1287179  0.1966903   0.654 0.51284   
+45: d_y3_d_x1 -0.1526113  0.2160522  -0.706 0.47996   
+45: d_y1_d_x2 -0.4510042  0.3739716  -1.206 0.22782   
+45: d_y2_d_x2 -0.1923211  0.2451119  -0.785 0.43267   
+45: d_y3_d_x2  0.2250886  0.1542001   1.460 0.14437   
+46: d_y1_d_x1  0.2196198  0.3120953   0.704 0.48162   
+46: d_y2_d_x1  0.3720376  0.3890813   0.956 0.33897   
+46: d_y3_d_x1 -0.3206175  0.3418885  -0.938 0.34836   
+46: d_y1_d_x2 -0.2160482  0.1967208  -1.098 0.27210   
+46: d_y2_d_x2 -0.5558719  0.3329339  -1.670 0.09500 . 
+46: d_y3_d_x2  0.4728836  0.2319021   2.039 0.04143 * 
+47: d_y1_d_x1  0.0675667  0.1625237   0.416 0.67760   
+47: d_y2_d_x1  0.0002118  0.0017223   0.123 0.90213   
+47: d_y3_d_x1 -0.0022930  0.0111918  -0.205 0.83767   
+47: d_y1_d_x2 -0.0664679  0.1464426  -0.454 0.64991   
+47: d_y2_d_x2 -0.0003165  0.0026318  -0.120 0.90429   
+47: d_y3_d_x2  0.0033819  0.0168399   0.201 0.84083   
+48: d_y1_d_x1  0.2215763  0.1639738   1.351 0.17660   
+48: d_y2_d_x1  0.0069406  0.0311010   0.223 0.82341   
+48: d_y3_d_x1 -0.0221528  0.0544918  -0.407 0.68435   
+48: d_y1_d_x2 -0.2179729  0.1421666  -1.533 0.12522   
+48: d_y2_d_x2 -0.0103702  0.0485413  -0.214 0.83083   
+48: d_y3_d_x2  0.0326734  0.0839788   0.389 0.69723   
+49: d_y1_d_x1  0.0670193  0.1703452   0.393 0.69400   
+49: d_y2_d_x1  0.2611504  0.1668225   1.565 0.11748   
+49: d_y3_d_x1 -0.2584476  0.1650362  -1.566 0.11735   
+49: d_y1_d_x2 -0.0659294  0.1580396  -0.417 0.67655   
+49: d_y2_d_x2 -0.3901922  0.2099946  -1.858 0.06315 . 
+49: d_y3_d_x2  0.3811881  0.1625644   2.345 0.01904 * 
+50: d_y1_d_x1  0.1076446  0.2756419   0.391 0.69615   
+50: d_y2_d_x1  0.2126782  0.2570757   0.827 0.40807   
+50: d_y3_d_x1 -0.2302289  0.2704463  -0.851 0.39461   
+50: d_y1_d_x2 -0.1058940  0.2239865  -0.473 0.63638   
+50: d_y2_d_x2 -0.3177685  0.2162648  -1.469 0.14174   
+50: d_y3_d_x2  0.3395679  0.1387389   2.448 0.01438 * 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+> # now with seemingly only dummy variables
+> margEffUncDA <- margEff( estResultBFGS, calcVCov = TRUE, returnJacobian = TRUE,
++    dummyVars = c( "x1", "x2" ) )
+> summary( margEffUncDA )
+                Estimate Std. error z value Pr(> z)   
+1: d_y1_d_x1   0.3229492  0.1969184   1.640 0.10100   
+1: d_y2_d_x1   0.3836677  0.2615002   1.467 0.14233   
+1: d_y3_d_x1  -0.3169556  0.2944299  -1.077 0.28170   
+1: d_y1_d_x2  -0.4318058  0.3203313  -1.348 0.17766   
+1: d_y2_d_x2  -0.3051328  0.2188714  -1.394 0.16328   
+1: d_y3_d_x2   0.2940685  0.1215225   2.420 0.01553 * 
+2: d_y1_d_x1   0.2429446  0.2037656   1.192 0.23315   
+2: d_y2_d_x1   0.3993798  0.3154487   1.266 0.20549   
+2: d_y3_d_x1  -0.3301446  0.3079400  -1.072 0.28367   
+2: d_y1_d_x2  -0.4318058  0.3203313  -1.348 0.17766   
+2: d_y2_d_x2  -0.3051328  0.2188714  -1.394 0.16328   
+2: d_y3_d_x2   0.2940685  0.1215225   2.420 0.01553 * 
+3: d_y1_d_x1   0.2388602  0.2048984   1.166 0.24372   
+3: d_y2_d_x1   0.3982789  0.3163614   1.259 0.20805   
+3: d_y3_d_x1  -0.3297836  0.3073036  -1.073 0.28320   
+3: d_y1_d_x2  -0.2446225  0.1490534  -1.641 0.10076   
+3: d_y2_d_x2  -0.5617320  0.1871985  -3.001 0.00269 **
+3: d_y3_d_x2   0.4642965  0.2172141   2.138 0.03256 * 
+4: d_y1_d_x1   0.4010840  0.2737181   1.465 0.14283   
+4: d_y2_d_x1   0.0557836  0.1120191   0.498 0.61850   
+4: d_y3_d_x1  -0.0842058  0.1161738  -0.725 0.46856   
+4: d_y1_d_x2  -0.2446225  0.1490534  -1.641 0.10076   
+4: d_y2_d_x2  -0.5617320  0.1871985  -3.001 0.00269 **
+4: d_y3_d_x2   0.4642965  0.2172141   2.138 0.03256 * 
+5: d_y1_d_x1   0.1883227  0.2178782   0.864 0.38740   
+5: d_y2_d_x1   0.3691077  0.3092617   1.194 0.23267   
+5: d_y3_d_x1  -0.3165704  0.2885639  -1.097 0.27262   
+5: d_y1_d_x2  -0.2446225  0.1490534  -1.641 0.10076   
+5: d_y2_d_x2  -0.5617320  0.1871985  -3.001 0.00269 **
+5: d_y3_d_x2   0.4642965  0.2172141   2.138 0.03256 * 
+6: d_y1_d_x1   0.3702088  0.2479950   1.493 0.13549   
+6: d_y2_d_x1   0.0348830  0.0858155   0.406 0.68438   
+6: d_y3_d_x1  -0.0614131  0.1004444  -0.611 0.54093   
+6: d_y1_d_x2  -0.2446225  0.1490534  -1.641 0.10076   
+6: d_y2_d_x2  -0.5617320  0.1871985  -3.001 0.00269 **
+6: d_y3_d_x2   0.4642965  0.2172141   2.138 0.03256 * 
+7: d_y1_d_x1   0.0103208  0.0578293   0.178 0.85835   
+7: d_y2_d_x1   0.0220459  0.0389256   0.566 0.57115   
+7: d_y3_d_x1  -0.0531236  0.0945413  -0.562 0.57418   
+7: d_y1_d_x2  -0.2446225  0.1490534  -1.641 0.10076   
+7: d_y2_d_x2  -0.5617320  0.1871985  -3.001 0.00269 **
+7: d_y3_d_x2   0.4642965  0.2172141   2.138 0.03256 * 
+8: d_y1_d_x1   0.4007101  0.2513387   1.594 0.11087   
+8: d_y2_d_x1   0.2907940  0.1839648   1.581 0.11395   
+8: d_y3_d_x1  -0.2596189  0.2327124  -1.116 0.26458   
+8: d_y1_d_x2  -0.4318058  0.3203313  -1.348 0.17766   
+8: d_y2_d_x2  -0.3051328  0.2188714  -1.394 0.16328   
+8: d_y3_d_x2   0.2940685  0.1215225   2.420 0.01553 * 
+9: d_y1_d_x1   0.2866645  0.1948097   1.472 0.14115   
+9: d_y2_d_x1   0.3996281  0.2934836   1.362 0.17330   
+9: d_y3_d_x1  -0.3277370  0.3066371  -1.069 0.28516   
+9: d_y1_d_x2  -0.4318058  0.3203313  -1.348 0.17766   
+9: d_y2_d_x2  -0.3051328  0.2188714  -1.394 0.16328   
+9: d_y3_d_x2   0.2940685  0.1215225   2.420 0.01553 * 
+10: d_y1_d_x1  0.3126554  0.1950652   1.603 0.10897   
+10: d_y2_d_x1  0.3897239  0.2715355   1.435 0.15121   
+10: d_y3_d_x1 -0.3208544  0.2989128  -1.073 0.28309   
+10: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+10: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+10: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+11: d_y1_d_x1  0.3559815  0.2109879   1.687 0.09156 . 
+11: d_y2_d_x1  0.3554683  0.2265475   1.569 0.11663   
+11: d_y3_d_x1 -0.2994680  0.2745089  -1.091 0.27531   
+11: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+11: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+11: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+12: d_y1_d_x1  0.1219655  0.2167209   0.563 0.57359   
+12: d_y2_d_x1  0.2849034  0.2455108   1.160 0.24586   
+12: d_y3_d_x1 -0.2706624  0.2345246  -1.154 0.24846   
+12: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+12: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+12: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+13: d_y1_d_x1  0.1607955  0.2212149   0.727 0.46730   
+13: d_y2_d_x1  0.3407304  0.2902802   1.174 0.24048   
+13: d_y3_d_x1 -0.3019451  0.2699648  -1.118 0.26337   
+13: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+13: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+13: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+14: d_y1_d_x1  0.0425054  0.1438735   0.295 0.76766   
+14: d_y2_d_x1  0.1103218  0.1084386   1.017 0.30898   
+14: d_y3_d_x1 -0.1487970  0.1464968  -1.016 0.30977   
+14: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+14: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+14: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+15: d_y1_d_x1  0.0374443  0.1341184   0.279 0.78010   
+15: d_y2_d_x1  0.0966391  0.0989303   0.977 0.32865   
+15: d_y3_d_x1 -0.1367612  0.1410156  -0.970 0.33213   
+15: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+15: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+15: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+16: d_y1_d_x1  0.3364459  0.2011069   1.673 0.09433 . 
+16: d_y2_d_x1  0.3738146  0.2475442   1.510 0.13102   
+16: d_y3_d_x1 -0.3107708  0.2873205  -1.082 0.27942   
+16: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+16: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+16: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+17: d_y1_d_x1  0.3723866  0.2229194   1.670 0.09482 . 
+17: d_y2_d_x1  0.3359156  0.2092497   1.605 0.10842   
+17: d_y3_d_x1 -0.2875002  0.2613449  -1.100 0.27130   
+17: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+17: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+17: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+18: d_y1_d_x1  0.2663399  0.1979782   1.345 0.17853   
+18: d_y2_d_x1  0.4021326  0.3063279   1.313 0.18927   
+18: d_y3_d_x1 -0.3302751  0.3090795  -1.069 0.28526   
+18: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+18: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+18: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+19: d_y1_d_x1  0.4376430  0.3057075   1.432 0.15227   
+19: d_y2_d_x1  0.1696360  0.1652745   1.026 0.30471   
+19: d_y3_d_x1 -0.1789464  0.1684535  -1.062 0.28810   
+19: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+19: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+19: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+20: d_y1_d_x1  0.2241586  0.2203192   1.017 0.30895   
+20: d_y2_d_x1  0.0042037  0.0189008   0.222 0.82400   
+20: d_y3_d_x1 -0.0149535  0.0440352  -0.340 0.73417   
+20: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+20: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+20: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+21: d_y1_d_x1  0.1243686  0.2174053   0.572 0.56728   
+21: d_y2_d_x1  0.2889116  0.2488541   1.161 0.24565   
+21: d_y3_d_x1 -0.2730094  0.2369908  -1.152 0.24933   
+21: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+21: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+21: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+22: d_y1_d_x1  0.0007459  0.0072977   0.102 0.91859   
+22: d_y2_d_x1  0.0006998  0.0029467   0.237 0.81229   
+22: d_y3_d_x1 -0.0057940  0.0229384  -0.253 0.80058   
+22: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+22: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+22: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+23: d_y1_d_x1  0.4382229  0.3090674   1.418 0.15622   
+23: d_y2_d_x1  0.1426446  0.1604881   0.889 0.37410   
+23: d_y3_d_x1 -0.1589837  0.1565509  -1.016 0.30985   
+23: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+23: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+23: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+24: d_y1_d_x1  0.0830536  0.1955292   0.425 0.67101   
+24: d_y2_d_x1  0.2095390  0.1829217   1.146 0.25200   
+24: d_y3_d_x1 -0.2234026  0.1914376  -1.167 0.24322   
+24: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+24: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+24: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+25: d_y1_d_x1  0.0865904  0.1983706   0.437 0.66247   
+25: d_y2_d_x1  0.2172090  0.1891481   1.148 0.25082   
+25: d_y3_d_x1 -0.2285086  0.1954931  -1.169 0.24245   
+25: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+25: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+25: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+26: d_y1_d_x1  0.4378383  0.3091474   1.416 0.15669   
+26: d_y2_d_x1  0.1365703  0.1589866   0.859 0.39034   
+26: d_y3_d_x1 -0.1543408  0.1539501  -1.003 0.31608   
+26: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+26: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+26: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+27: d_y1_d_x1  0.1729600  0.2202574   0.785 0.43230   
+27: d_y2_d_x1  0.3543882  0.3000078   1.181 0.23750   
+27: d_y3_d_x1 -0.3091116  0.2788965  -1.108 0.26772   
+27: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+27: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+27: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+28: d_y1_d_x1  0.0257894  0.1073759   0.240 0.81019   
+28: d_y2_d_x1  0.0644472  0.0761722   0.846 0.39751   
+28: d_y3_d_x1 -0.1055972  0.1270193  -0.831 0.40578   
+28: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+28: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+28: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+29: d_y1_d_x1  0.3029664  0.1942862   1.559 0.11891   
+29: d_y2_d_x1  0.3943070  0.2803474   1.406 0.15958   
+29: d_y3_d_x1 -0.3239068  0.3023941  -1.071 0.28411   
+29: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+29: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+29: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+30: d_y1_d_x1  0.2118732  0.2124133   0.997 0.31854   
+30: d_y2_d_x1  0.3863182  0.3169271   1.219 0.22286   
+30: d_y3_d_x1 -0.3247953  0.2998024  -1.083 0.27865   
+30: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+30: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+30: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+31: d_y1_d_x1  0.2527667  0.2011528   1.257 0.20890   
+31: d_y2_d_x1  0.4012708  0.3124087   1.284 0.19899   
+31: d_y3_d_x1 -0.3305991  0.3089367  -1.070 0.28457   
+31: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+31: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+31: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+32: d_y1_d_x1  0.3573774  0.2118731   1.687 0.09165 . 
+32: d_y2_d_x1  0.3539601  0.2250456   1.573 0.11576   
+32: d_y3_d_x1 -0.2985441  0.2734764  -1.092 0.27498   
+32: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+32: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+32: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+33: d_y1_d_x1  0.1516903  0.2212870   0.685 0.49303   
+33: d_y2_d_x1  0.3293285  0.2816236   1.169 0.24225   
+33: d_y3_d_x1 -0.2958065  0.2625654  -1.127 0.25991   
+33: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+33: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+33: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+34: d_y1_d_x1  0.4109694  0.2640717   1.556 0.11964   
+34: d_y2_d_x1  0.2693770  0.1773855   1.519 0.12886   
+34: d_y3_d_x1 -0.2461064  0.2199809  -1.119 0.26324   
+34: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+34: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+34: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+35: d_y1_d_x1  0.1897255  0.2176062   0.872 0.38328   
+35: d_y2_d_x1  0.3703130  0.3099381   1.195 0.23217   
+35: d_y3_d_x1 -0.3171667  0.2893553  -1.096 0.27303   
+35: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+35: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+35: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+36: d_y1_d_x1  0.3438410  0.2043023   1.683 0.09237 . 
+36: d_y2_d_x1  0.3674585  0.2396459   1.533 0.12519   
+36: d_y3_d_x1 -0.3068357  0.2828260  -1.085 0.27797   
+36: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+36: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+36: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+37: d_y1_d_x1  0.4348121  0.3071966   1.415 0.15695   
+37: d_y2_d_x1  0.1159358  0.1523350   0.761 0.44662   
+37: d_y3_d_x1 -0.1380751  0.1452016  -0.951 0.34164   
+37: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+37: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+37: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+38: d_y1_d_x1  0.3693685  0.2204735   1.675 0.09387 . 
+38: d_y2_d_x1  0.3398245  0.2123516   1.600 0.10953   
+38: d_y3_d_x1 -0.2898933  0.2639391  -1.098 0.27206   
+38: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+38: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+38: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+39: d_y1_d_x1  0.1625955  0.2211322   0.735 0.46217   
+39: d_y2_d_x1  0.3428643  0.2918528   1.175 0.24008   
+39: d_y3_d_x1 -0.3030787  0.2713560  -1.117 0.26404   
+39: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+39: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+39: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+40: d_y1_d_x1  0.4310083  0.3036672   1.419 0.15580   
+40: d_y2_d_x1  0.1021310  0.1462658   0.698 0.48502   
+40: d_y3_d_x1 -0.1266963  0.1392940  -0.910 0.36305   
+40: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+40: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+40: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+41: d_y1_d_x1  0.4383603  0.3088804   1.419 0.15584   
+41: d_y2_d_x1  0.1464601  0.1613405   0.908 0.36400   
+41: d_y3_d_x1 -0.1618696  0.1581962  -1.023 0.30620   
+41: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+41: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+41: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+42: d_y1_d_x1  0.3938190  0.2435193   1.617 0.10584   
+42: d_y2_d_x1  0.3033933  0.1892822   1.603 0.10897   
+42: d_y3_d_x1 -0.2674705  0.2404638  -1.112 0.26600   
+42: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+42: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+42: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+43: d_y1_d_x1  0.3189542  0.1960673   1.627 0.10379   
+43: d_y2_d_x1  0.3861652  0.2654683   1.455 0.14576   
+43: d_y3_d_x1 -0.3185505  0.2962658  -1.075 0.28228   
+43: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+43: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+43: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+44: d_y1_d_x1  0.0971787  0.2056705   0.472 0.63657   
+44: d_y2_d_x1  0.2391890  0.2072537   1.154 0.24846   
+44: d_y3_d_x1 -0.2427451  0.2075624  -1.170 0.24220   
+44: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+44: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+44: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+45: d_y1_d_x1  0.4025241  0.2750818   1.463 0.14339   
+45: d_y2_d_x1  0.0571279  0.1134119   0.504 0.61446   
+45: d_y3_d_x1 -0.0855674  0.1170016  -0.731 0.46457   
+45: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+45: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+45: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+46: d_y1_d_x1  0.1023270  0.2086179   0.490 0.62378   
+46: d_y2_d_x1  0.2493443  0.2157179   1.156 0.24773   
+46: d_y3_d_x1 -0.2491363  0.2133487  -1.168 0.24291   
+46: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+46: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+46: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+47: d_y1_d_x1  0.1866549  0.2239000   0.834 0.40448   
+47: d_y2_d_x1  0.0021906  0.0112184   0.195 0.84518   
+47: d_y3_d_x1 -0.0097002  0.0326790  -0.297 0.76660   
+47: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+47: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+47: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+48: d_y1_d_x1  0.3664196  0.2453495   1.493 0.13532   
+48: d_y2_d_x1  0.0330393  0.0830093   0.398 0.69062   
+48: d_y3_d_x1 -0.0592154  0.0986854  -0.600 0.54848   
+48: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+48: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+48: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+49: d_y1_d_x1  0.1856984  0.2183644   0.850 0.39510   
+49: d_y2_d_x1  0.3667908  0.3079205   1.191 0.23358   
+49: d_y3_d_x1 -0.3154174  0.2870419  -1.099 0.27183   
+49: d_y1_d_x2 -0.2446225  0.1490534  -1.641 0.10076   
+49: d_y2_d_x2 -0.5617320  0.1871985  -3.001 0.00269 **
+49: d_y3_d_x2  0.4642965  0.2172141   2.138 0.03256 * 
+50: d_y1_d_x1  0.0417272  0.1424363   0.293 0.76956   
+50: d_y2_d_x1  0.1082331  0.1069829   1.012 0.31169   
+50: d_y3_d_x1 -0.1469973  0.1456618  -1.009 0.31289   
+50: d_y1_d_x2 -0.4318058  0.3203313  -1.348 0.17766   
+50: d_y2_d_x2 -0.3051328  0.2188714  -1.394 0.16328   
+50: d_y3_d_x2  0.2940685  0.1215225   2.420 0.01553 * 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+> # now with returned Jacobian but without variance covariance matrix
+> margEffUncJac <- margEff( estResultBFGS, returnJacobian = TRUE )
+> all.equal( attr( margEffUncJac, "jacobian" ), attr( margEffUnc, "jacobian" ) )
+[1] TRUE
+> # now including mean values of the marginal effects
+> margEffUncM <- margEff( estResultBFGS, calcVCov = TRUE, returnJacobian = TRUE,
++    addMean = TRUE )
+> all.equal( margEffUnc, margEffUncM[ -(nObs+1), ], check.attributes = FALSE )
+[1] TRUE
+> print( margEffUncM[ nObs:(nObs+1), ] )
+      d_y1_d_x1 d_y2_d_x1  d_y3_d_x1  d_y1_d_x2  d_y2_d_x2 d_y3_d_x2
+50   0.04172722 0.1082331 -0.1469973 -0.1058940 -0.3177685 0.3395679
+mean 0.25305226 0.2459298 -0.2259482 -0.2385306 -0.3379456 0.3143112
+> all.equal( attr( margEffUnc, "vcov" ), attr( margEffUncM, "vcov" )[ 1:nObs, , ] )
+[1] TRUE
+> print( attr( margEffUncM, "vcov" )[ nObs:(nObs+1), , ] )
+, , d_y1_d_x1
+
+      d_y1_d_x1    d_y2_d_x1    d_y3_d_x1    d_y1_d_x2    d_y2_d_x2   d_y3_d_x2
+50   0.02028810 -0.002813578 -0.001572159 -0.031743940 0.0142068618 0.002395896
+mean 0.02205528 -0.007930409 -0.001681515  0.002256626 0.0008256098 0.002957937
+
+, , d_y2_d_x1
+
+        d_y1_d_x1  d_y2_d_x1    d_y3_d_x1    d_y1_d_x2    d_y2_d_x2
+50   -0.002813578 0.01144533 -0.006468166  0.005122685 -0.020284870
+mean -0.007930409 0.02591722  0.006303994 -0.001479403  0.002586458
+        d_y3_d_x2
+50    0.003782239
+mean -0.005399069
+
+, , d_y3_d_x1
+
+        d_y1_d_x1    d_y2_d_x1  d_y3_d_x1    d_y1_d_x2    d_y2_d_x2
+50   -0.001572159 -0.006468166 0.02121735  0.002631792  0.008918785
+mean -0.001681515  0.006303994 0.03729586 -0.001273756 -0.002646520
+        d_y3_d_x2
+50   -0.015842908
+mean  0.002036567
+
+, , d_y1_d_x2
+
+        d_y1_d_x1    d_y2_d_x1    d_y3_d_x1   d_y1_d_x2     d_y2_d_x2
+50   -0.031743940  0.005122685  0.002631792 0.050169955 -0.0241270415
+mean  0.002256626 -0.001479403 -0.001273756 0.005158698  0.0005432138
+        d_y3_d_x2
+50   -0.003698285
+mean  0.001211321
+
+, , d_y2_d_x2
+
+        d_y1_d_x1    d_y2_d_x1    d_y3_d_x1     d_y1_d_x2   d_y2_d_x2
+50   0.0142068618 -0.020284870  0.008918785 -0.0241270415 0.046770483
+mean 0.0008256098  0.002586458 -0.002646520  0.0005432138 0.001989406
+        d_y3_d_x2
+50   -0.004816119
+mean -0.001093343
+
+, , d_y3_d_x2
+
+       d_y1_d_x1    d_y2_d_x1    d_y3_d_x1    d_y1_d_x2    d_y2_d_x2
+50   0.002395896  0.003782239 -0.015842908 -0.003698285 -0.004816119
+mean 0.002957937 -0.005399069  0.002036567  0.001211321 -0.001093343
+       d_y3_d_x2
+50   0.019248488
+mean 0.005235179
+
+> print( drop( attr( margEffUncM, "vcov" )[ nObs+1, , ] ) )
+              d_y1_d_x1    d_y2_d_x1    d_y3_d_x1     d_y1_d_x2     d_y2_d_x2
+d_y1_d_x1  0.0220552769 -0.007930409 -0.001681515  0.0022566258  0.0008256098
+d_y2_d_x1 -0.0079304093  0.025917223  0.006303994 -0.0014794032  0.0025864581
+d_y3_d_x1 -0.0016815147  0.006303994  0.037295860 -0.0012737564 -0.0026465199
+d_y1_d_x2  0.0022566258 -0.001479403 -0.001273756  0.0051586985  0.0005432138
+d_y2_d_x2  0.0008256098  0.002586458 -0.002646520  0.0005432138  0.0019894058
+d_y3_d_x2  0.0029579367 -0.005399069  0.002036567  0.0012113215 -0.0010933427
+             d_y3_d_x2
+d_y1_d_x1  0.002957937
+d_y2_d_x1 -0.005399069
+d_y3_d_x1  0.002036567
+d_y1_d_x2  0.001211321
+d_y2_d_x2 -0.001093343
+d_y3_d_x2  0.005235179
+> all.equal( attr( margEffUnc, "jacobian" ), attr( margEffUncM, "jacobian" )[ 1:nObs, , ] )
+[1] TRUE
+> print( attr( margEffUncM, "jacobian" )[ nObs:(nObs+1), , ] )
+, , b_1_0
+
+       d_y1_d_x1 d_y2_d_x1 d_y3_d_x1  d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+50   -0.08621442         0         0 0.18081872         0         0
+mean -0.11555729         0         0 0.08871062         0         0
+
+, , b_1_1
+
+       d_y1_d_x1 d_y2_d_x1 d_y3_d_x1  d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+50   0.006502259         0         0 0.00000000         0         0
+mean 0.154762044         0         0 0.06486142         0         0
+
+, , b_1_2
+
+      d_y1_d_x1 d_y2_d_x1 d_y3_d_x1   d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+50   0.08849228         0         0 -0.09292049         0         0
+mean 0.05335740         0         0  0.16351750         0         0
+
+, , b_2_0
+
+     d_y1_d_x1    d_y2_d_x1 d_y3_d_x1 d_y1_d_x2    d_y2_d_x2 d_y3_d_x2
+50           0 -0.167907668         0         0  0.371170187         0
+mean         0  0.003481499         0         0 -0.001743184         0
+
+, , b_2_1
+
+     d_y1_d_x1  d_y2_d_x1 d_y3_d_x1 d_y1_d_x2  d_y2_d_x2 d_y3_d_x2
+50           0 0.03369144         0         0 0.00000000         0
+mean         0 0.22633598         0         0 0.04748192         0
+
+, , b_2_2
+
+     d_y1_d_x1 d_y2_d_x1 d_y3_d_x1 d_y1_d_x2   d_y2_d_x2 d_y3_d_x2
+50           0 0.1723439         0         0 -0.17954595         0
+mean         0 0.0907140         0         0  0.08276367         0
+
+, , b_3_0
+
+     d_y1_d_x1 d_y2_d_x1   d_y3_d_x1 d_y1_d_x2 d_y2_d_x2   d_y3_d_x2
+50           0         0 -0.18169300         0         0  0.30059023
+mean         0         0  0.01121233         0         0 -0.01301531
+
+, , b_3_1
+
+     d_y1_d_x1 d_y2_d_x1  d_y3_d_x1 d_y1_d_x2 d_y2_d_x2  d_y3_d_x2
+50           0         0 0.08789435         0         0 0.00000000
+mean         0         0 0.26243481         0         0 0.03619013
+
+, , b_3_2
+
+     d_y1_d_x1 d_y2_d_x1  d_y3_d_x1 d_y1_d_x2 d_y2_d_x2   d_y3_d_x2
+50           0         0 0.18649349         0         0 -0.03897388
+mean         0         0 0.08964001         0         0  0.12386551
+
+, , R_1_2
+
+     d_y1_d_x1 d_y2_d_x1 d_y3_d_x1 d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+50           0         0         0         0         0         0
+mean         0         0         0         0         0         0
+
+, , R_1_3
+
+     d_y1_d_x1 d_y2_d_x1 d_y3_d_x1 d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+50           0         0         0         0         0         0
+mean         0         0         0         0         0         0
+
+, , R_2_3
+
+     d_y1_d_x1 d_y2_d_x1 d_y3_d_x1 d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+50           0         0         0         0         0         0
+mean         0         0         0         0         0         0
+
+> print( drop( attr( margEffUncM, "jacobian" )[ nObs+1, , ] ) )
+                b_1_0      b_1_1     b_1_2        b_2_0      b_2_1      b_2_2
+d_y1_d_x1 -0.11555729 0.15476204 0.0533574  0.000000000 0.00000000 0.00000000
+d_y2_d_x1  0.00000000 0.00000000 0.0000000  0.003481499 0.22633598 0.09071400
+d_y3_d_x1  0.00000000 0.00000000 0.0000000  0.000000000 0.00000000 0.00000000
+d_y1_d_x2  0.08871062 0.06486142 0.1635175  0.000000000 0.00000000 0.00000000
+d_y2_d_x2  0.00000000 0.00000000 0.0000000 -0.001743184 0.04748192 0.08276367
+d_y3_d_x2  0.00000000 0.00000000 0.0000000  0.000000000 0.00000000 0.00000000
+                b_3_0      b_3_1      b_3_2 R_1_2 R_1_3 R_2_3
+d_y1_d_x1  0.00000000 0.00000000 0.00000000     0     0     0
+d_y2_d_x1  0.00000000 0.00000000 0.00000000     0     0     0
+d_y3_d_x1  0.01121233 0.26243481 0.08964001     0     0     0
+d_y1_d_x2  0.00000000 0.00000000 0.00000000     0     0     0
+d_y2_d_x2  0.00000000 0.00000000 0.00000000     0     0     0
+d_y3_d_x2 -0.01301531 0.03619013 0.12386551     0     0     0
+> all.equal( summary( margEffUnc )[ , ], 
++    summary( margEffUncM )[ 1:( 6 * nObs ), ], check.attributes = FALSE )
+[1] TRUE
+> printCoefmat( summary( margEffUncM )[ -( 1:( 6 * ( nObs - 1 ) ) ), ] )
+                 Estimate Std. error z value   Pr(> z)    
+50: d_y1_d_x1    0.041727   0.142436  0.2930 0.7695577    
+50: d_y2_d_x1    0.108233   0.106983  1.0117 0.3116880    
+50: d_y3_d_x1   -0.146997   0.145662 -1.0092 0.3128935    
+50: d_y1_d_x2   -0.105894   0.223987 -0.4728 0.6363775    
+50: d_y2_d_x2   -0.317768   0.216265 -1.4693 0.1417382    
+50: d_y3_d_x2    0.339568   0.138739  2.4475 0.0143838 *  
+mean: d_y1_d_x1  0.253052   0.148510  1.7039 0.0883925 .  
+mean: d_y2_d_x1  0.245930   0.160988  1.5276 0.1266055    
+mean: d_y3_d_x1 -0.225948   0.193121 -1.1700 0.2420090    
+mean: d_y1_d_x2 -0.238531   0.071824 -3.3210 0.0008968 ***
+mean: d_y2_d_x2 -0.337946   0.044603 -7.5768 3.542e-14 ***
+mean: d_y3_d_x2  0.314311   0.072355  4.3440 1.399e-05 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+> # now at mean values of explanatory variables
+> margEffUncMean <- margEff( estResultBFGS, calcVCov = TRUE, 
++    data = as.data.frame( t( colMeans( xMat ) ) ) )
+> summary( margEffUncMean )
+          Estimate Std. error z value Pr(> z)  
+d_y1_d_x1   0.2931     0.1944   1.508  0.1315  
+d_y2_d_x1   0.3979     0.2886   1.379  0.1680  
+d_y3_d_x1  -0.3264     0.3052  -1.070  0.2848  
+d_y1_d_x2  -0.2967     0.1257  -2.361  0.0183 *
+d_y2_d_x2  -0.6194     0.2474  -2.504  0.0123 *
+d_y3_d_x2   0.4942     0.2616   1.890  0.0588 .
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+> # now with argument 'atMean'
+> margEffUncMeanA <- margEff( estResultBFGS, calcVCov = TRUE, atMean = TRUE )
+> all.equal( margEffUncMeanA, margEffUncMean )
+[1] TRUE
+> 
+> # conditional marginal effects
+> # (assuming that all other dependent variables are as observed)
+> margEffCondObs <- margEff( estResultBFGS, cond = TRUE, algorithm = GenzBretz() )
+> print( margEffCondObs )
+      d_y1_d_x1    d_y2_d_x1    d_y3_d_x1    d_y1_d_x2     d_y2_d_x2
+1  0.3232361962 0.3432683006 -0.355048446 -0.459509098 -0.4313201492
+2  0.1153483935 0.3596761868 -0.361870523 -0.229189942 -0.5342318452
+3  0.2375484576 0.3307600421 -0.361244529 -0.089536451 -0.4547362676
+4  0.4122503068 0.0694645017 -0.053904996 -0.472083947 -0.2122800739
+5  0.1847060251 0.3084425402 -0.343223755 -0.060445211 -0.3646545059
+6  0.3787985991 0.0477528062 -0.033663433 -0.474756965 -0.1554861558
+7  0.0100311239 0.0209668055 -0.053506160 -0.001106247 -0.0060166004
+8  0.4110128568 0.1322373739 -0.403457904 -0.470548414 -0.1341642415
+9  0.1474786224 0.3575139395 -0.360949264 -0.264433849 -0.4844316876
+10 0.3116938786 0.3484655128 -0.361307997 -0.453660745 -0.4473769719
+11 0.2058976401 0.3200081428 -0.328883694 -0.079864895 -0.5893156417
+12 0.1177334095 0.2436538298 -0.287657466 -0.031148920 -0.2231415107
+13 0.1471332486 0.3159154131 -0.349075440 -0.039228803 -0.3336039182
+14 0.0406336000 0.0999068773 -0.152735168 -0.007155819 -0.0531209314
+15 0.0358197254 0.0880153046 -0.139996990 -0.091958139 -0.2591680623
+16 0.1882725183 0.3350175752 -0.342159788 -0.067926448 -0.5870797947
+17 0.3833567161 0.2924153584 -0.314583141 -0.212937647 -0.5602548018
+18 0.3979220186 0.2666187493 -0.404805015 -0.513151557 -0.3701386058
+19 0.4437521979 0.1791338917 -0.160502351 -0.532987886 -0.4316406791
+20 0.2259756660 0.0022584118 -0.019229939 -0.089444084 -0.0005387236
+21 0.1201169118 0.2467991134 -0.290399333 -0.244509996 -0.5058124538
+22 0.0007497926 0.0006978391 -0.005797477 -0.002951779 -0.0038207794
+23 0.4535483129 0.0631045466 -0.259933151 -0.387912218 -0.0460271705
+24 0.0233590201 0.2044569486 -0.233822492 -0.072712001 -0.4720414686
+25 0.1747911246 0.1895312592 -0.261808609 -0.302155599 -0.4395843931
+26 0.4530947663 0.0604711728 -0.252242094 -0.382153939 -0.0433433667
+27 0.1689887911 0.2972946593 -0.333810139 -0.052838666 -0.3336920584
+28 0.0247529328 0.0595893814 -0.107382268 -0.003670897 -0.0251760065
+29 0.3008617678 0.2048889670 -0.428116555 -0.447474248 -0.2665140730
+30 0.2090453560 0.3214423437 -0.354022707 -0.073180136 -0.4091058932
+31 0.2455445912 0.3606360268 -0.379506727 -0.091829433 -0.5089267097
+32 0.2072019349 0.3187872119 -0.327786882 -0.311947694 -0.3715008229
+33 0.1474382857 0.2781589528 -0.317490037 -0.043152940 -0.2887484021
+34 0.4881154711 0.2484746725 -0.250623067 -0.449373107 -0.5284208167
+35 0.1861474779 0.3093531933 -0.343988258 -0.061166505 -0.3674094305
+36 0.4662923136 0.3127833842 -0.339277170 -0.321772793 -0.5593117663
+37 0.4496318140 0.0515675468 -0.224907158 -0.429079174 -0.1533983305
+38 0.3756418193 0.3074074008 -0.313706240 -0.474844440 -0.3482839442
+39 0.0638654116 0.3176168542 -0.326350396 -0.154807067 -0.5696465233
+40 0.4453405495 0.0456337187 -0.205495492 -0.344289600 -0.0292378379
+41 0.4537160101 0.1514742551 -0.139238355 -0.391407408 -0.1245240635
+42 0.4031850053 0.1389606133 -0.411561969 -0.472975838 -0.1445333297
+43 0.3187527097 0.1953852747 -0.433867721 -0.457330982 -0.2461844889
+44 0.0933321287 0.2073153800 -0.255570394 -0.022420511 -0.1675168917
+45 0.4138250511 0.0262438003 -0.134437144 -0.471512840 -0.0877855065
+46 0.0320414287 0.2395251689 -0.262837614 -0.092981737 -0.5147062188
+47 0.1877038486 0.0012227798 -0.011951812 -0.066531222 -0.0002453633
+48 0.3747295025 0.0156619839 -0.089368038 -0.219843609 -0.0068112323
+49 0.1820121476 0.3066912948 -0.341751326 -0.059108011 -0.3594666853
+50 0.1059631810 0.0980984696 -0.167108498 -0.194204529 -0.2810062303
+     d_y3_d_x2
+1  0.360815947
+2  0.497693370
+3  0.453818047
+4  0.175490813
+5  0.390535156
+6  0.120618004
+7  0.028391238
+8  0.378315289
+9  0.445348474
+10 0.379760171
+11 0.524477068
+12 0.282396164
+13 0.371331912
+14 0.112653252
+15 0.334504219
+16 0.522126289
+17 0.522184293
+18 0.605611100
+19 0.385355560
+20 0.006078859
+21 0.528322176
+22 0.022043552
+23 0.167180007
+24 0.474967844
+25 0.512488332
+26 0.159487780
+27 0.368015826
+28 0.070192644
+29 0.574533205
+30 0.422114838
+31 0.493178952
+32 0.328691011
+33 0.334349642
+34 0.495369678
+35 0.392516250
+36 0.542851700
+37 0.512469883
+38 0.267731303
+39 0.541591920
+40 0.117148027
+41 0.061954778
+42 0.398801119
+43 0.554039712
+44 0.234531669
+45 0.362288294
+46 0.506043388
+47 0.003514004
+48 0.038239307
+49 0.386795047
+50 0.384142824
+> 
+> # conditional marginal effects with covariance matrix at sample mean
+> # (assuming that all other dependent variables are at there modal values)
+> # (with Jacobian)
+> margEffCondObsCov <- margEff( estResultBFGS, cond = TRUE,
++    atMean = TRUE, othDepVar = c( colMedians( yMat * 1 ) ), 
++    algorithm = GenzBretz(), calcVCov = TRUE, returnJacobian = TRUE )
+> print( margEffCondObsCov )
+  d_y1_d_x1 d_y2_d_x1  d_y3_d_x1  d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+1 0.2898572 0.3558136 -0.3706332 -0.2927278 -0.570811 0.5331238
+> print( attr( margEffCondObsCov, "vcov" ) )
+, , d_y1_d_x1
+
+   d_y1_d_x1   d_y2_d_x1   d_y3_d_x1   d_y1_d_x2   d_y2_d_x2  d_y3_d_x2
+1 0.02917825 -0.01501905 -0.02193211 -0.01396746 0.008000066 0.01931686
+
+, , d_y2_d_x1
+
+    d_y1_d_x1  d_y2_d_x1 d_y3_d_x1  d_y1_d_x2  d_y2_d_x2   d_y3_d_x2
+1 -0.01501905 0.05320172 0.0319124 0.01182735 -0.0241312 -0.03099196
+
+, , d_y3_d_x1
+
+    d_y1_d_x1 d_y2_d_x1 d_y3_d_x1 d_y1_d_x2   d_y2_d_x2   d_y3_d_x2
+1 -0.02193211 0.0319124 0.1246049 0.0336234 -0.02175698 -0.07938726
+
+, , d_y1_d_x2
+
+    d_y1_d_x1  d_y2_d_x1 d_y3_d_x1  d_y1_d_x2    d_y2_d_x2   d_y3_d_x2
+1 -0.01396746 0.01182735 0.0336234 0.02911258 -0.007133504 -0.02753816
+
+, , d_y2_d_x2
+
+    d_y1_d_x1  d_y2_d_x1   d_y3_d_x1    d_y1_d_x2  d_y2_d_x2   d_y3_d_x2
+1 0.008000066 -0.0241312 -0.02175698 -0.007133504 0.06178181 -0.01312535
+
+, , d_y3_d_x2
+
+   d_y1_d_x1   d_y2_d_x1   d_y3_d_x1   d_y1_d_x2   d_y2_d_x2 d_y3_d_x2
+1 0.01931686 -0.03099196 -0.07938726 -0.02753816 -0.01312535 0.1127387
+
+> print( drop( attr( margEffCondObsCov, "vcov" ) ) )
+             d_y1_d_x1   d_y2_d_x1   d_y3_d_x1    d_y1_d_x2    d_y2_d_x2
+d_y1_d_x1  0.029178251 -0.01501905 -0.02193211 -0.013967456  0.008000066
+d_y2_d_x1 -0.015019052  0.05320172  0.03191240  0.011827349 -0.024131203
+d_y3_d_x1 -0.021932109  0.03191240  0.12460488  0.033623397 -0.021756978
+d_y1_d_x2 -0.013967456  0.01182735  0.03362340  0.029112578 -0.007133504
+d_y2_d_x2  0.008000066 -0.02413120 -0.02175698 -0.007133504  0.061781812
+d_y3_d_x2  0.019316858 -0.03099196 -0.07938726 -0.027538160 -0.013125355
+            d_y3_d_x2
+d_y1_d_x1  0.01931686
+d_y2_d_x1 -0.03099196
+d_y3_d_x1 -0.07938726
+d_y1_d_x2 -0.02753816
+d_y2_d_x2 -0.01312535
+d_y3_d_x2  0.11273869
+> print( attr( margEffCondObsCov, "jacobian" ) )
+, , b_1_0
+
+   d_y1_d_x1 d_y2_d_x1 d_y3_d_x1 d_y1_d_x2   d_y2_d_x2  d_y3_d_x2
+1 -0.2756386 0.0364304 0.0215077 0.3042895 -0.03868758 -0.0142573
+
+, , b_1_1
+
+  d_y1_d_x1   d_y2_d_x1   d_y3_d_x1 d_y1_d_x2   d_y2_d_x2    d_y3_d_x2
+1 0.1088669 -0.01679466 -0.04018058 0.1456903 -0.01858427 -0.006984302
+
+, , b_1_2
+
+    d_y1_d_x1   d_y2_d_x1   d_y3_d_x1 d_y1_d_x2   d_y2_d_x2   d_y3_d_x2
+1 -0.04035577 0.005333712 0.003148906 0.2999736 -0.04553434 -0.06522682
+
+, , b_2_0
+
+   d_y1_d_x1  d_y2_d_x1   d_y3_d_x1   d_y1_d_x2   d_y2_d_x2    d_y3_d_x2
+1 0.02941159 0.02467612 0.002072237 -0.02415646 -0.06594595 -0.009121088
+
+, , b_2_1
+
+    d_y1_d_x1 d_y2_d_x1  d_y3_d_x1  d_y1_d_x2   d_y2_d_x2    d_y3_d_x2
+1 -0.02144958 0.3747664 0.01507689 -0.0111527 -0.03157062 -0.004266047
+
+, , b_2_2
+
+  d_y1_d_x1   d_y2_d_x1    d_y3_d_x1   d_y1_d_x2 d_y2_d_x2  d_y3_d_x2
+1 0.0043061 0.003612788 0.0003033925 -0.04436203 0.3924182 0.01701016
+
+, , b_3_0
+
+   d_y1_d_x1    d_y2_d_x1 d_y3_d_x1   d_y1_d_x2     d_y2_d_x2  d_y3_d_x2
+1 0.03799907 -0.001971137 0.1107795 -0.03651136 -0.0007867617 -0.1786325
+
+, , b_3_1
+
+    d_y1_d_x1  d_y2_d_x1 d_y3_d_x1   d_y1_d_x2     d_y2_d_x2   d_y3_d_x2
+1 -0.02673914 0.01016274 0.3997707 -0.01807419 -0.0004326831 -0.08606061
+
+, , b_3_2
+
+    d_y1_d_x1     d_y2_d_x1  d_y3_d_x1   d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+1 0.005563378 -0.0002885908 0.01621904 -0.06032818  0.013186   0.36048
+
+, , R_1_2
+
+   d_y1_d_x1  d_y2_d_x1    d_y3_d_x1   d_y1_d_x2 d_y2_d_x2   d_y3_d_x2
+1 0.05911053 -0.1147012 9.086992e-05 0.002458758 0.1113038 -0.03156968
+
+, , R_1_3
+
+    d_y1_d_x1    d_y2_d_x1  d_y3_d_x1   d_y1_d_x2  d_y2_d_x2 d_y3_d_x2
+1 -0.04741947 -0.002969002 -0.1719091 -0.02077546 0.01841092 0.1872539
+
+, , R_2_3
+
+     d_y1_d_x1 d_y2_d_x1  d_y3_d_x1  d_y1_d_x2  d_y2_d_x2 d_y3_d_x2
+1 -0.001938164 0.2156583 -0.2744872 0.00173081 -0.3540987 0.4665918
+
+> print( drop( attr( margEffCondObsCov, "jacobian" ) ) )
+                b_1_0        b_1_1        b_1_2        b_2_0        b_2_1
+d_y1_d_x1 -0.27563860  0.108866929 -0.040355771  0.029411588 -0.021449583
+d_y2_d_x1  0.03643040 -0.016794665  0.005333712  0.024676118  0.374766354
+d_y3_d_x1  0.02150770 -0.040180579  0.003148906  0.002072237  0.015076895
+d_y1_d_x2  0.30428951  0.145690299  0.299973601 -0.024156463 -0.011152701
+d_y2_d_x2 -0.03868758 -0.018584272 -0.045534342 -0.065945950 -0.031570619
+d_y3_d_x2 -0.01425730 -0.006984302 -0.065226821 -0.009121088 -0.004266047
+                  b_2_2         b_3_0         b_3_1         b_3_2         R_1_2
+d_y1_d_x1  0.0043060996  0.0379990740 -0.0267391390  0.0055633784  5.911053e-02
+d_y2_d_x1  0.0036127877 -0.0019711371  0.0101627380 -0.0002885908 -1.147012e-01
+d_y3_d_x1  0.0003033925  0.1107795413  0.3997706693  0.0162190406  9.086992e-05
+d_y1_d_x2 -0.0443620333 -0.0365113561 -0.0180741893 -0.0603281798  2.458758e-03
+d_y2_d_x2  0.3924182043 -0.0007867617 -0.0004326831  0.0131859993  1.113038e-01
+d_y3_d_x2  0.0170101648 -0.1786325472 -0.0860606068  0.3604800463 -3.156968e-02
+                 R_1_3        R_2_3
+d_y1_d_x1 -0.047419474 -0.001938164
+d_y2_d_x1 -0.002969002  0.215658265
+d_y3_d_x1 -0.171909133 -0.274487242
+d_y1_d_x2 -0.020775461  0.001730810
+d_y2_d_x2  0.018410922 -0.354098693
+d_y3_d_x2  0.187253948  0.466591818
+> summary( margEffCondObsCov )
+          Estimate Std. error z value Pr(> z)  
+d_y1_d_x1   0.2899     0.1708   1.697  0.0897 .
+d_y2_d_x1   0.3558     0.2307   1.543  0.1229  
+d_y3_d_x1  -0.3706     0.3530  -1.050  0.2937  
+d_y1_d_x2  -0.2927     0.1706  -1.716  0.0862 .
+d_y2_d_x2  -0.5708     0.2486  -2.296  0.0216 *
+d_y3_d_x2   0.5331     0.3358   1.588  0.1123  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+> # now with explicitly specifying dummy variables
+> margEffCondObsCovD <- margEff( estResultBFGS, cond = TRUE,
++    atMean = TRUE, othDepVar = c( colMedians( yMat * 1 ) ),
++    algorithm = GenzBretz(),
++    calcVCov = TRUE, returnJacobian = TRUE, dummyVars = c( "x1" ) )
+> all.equal( margEffCondObsCovD, margEffCondObsCov )
+[1] TRUE
+> # now with seemingly no dummy variables
+> margEffCondObsCovD0 <- margEff( estResultBFGS, cond = TRUE,
++    atMean = TRUE, othDepVar = c( colMedians( yMat * 1 ) ), 
++    algorithm = GenzBretz(),
++    calcVCov = TRUE, returnJacobian = TRUE, dummyVars = NULL )
+> summary( margEffCondObsCovD0 )
+          Estimate Std. error z value Pr(> z)  
+d_y1_d_x1   0.2979     0.1878   1.586  0.1128  
+d_y2_d_x1   0.3661     0.2556   1.432  0.1521  
+d_y3_d_x1  -0.3861     0.4035  -0.957  0.3387  
+d_y1_d_x2  -0.2927     0.1706  -1.716  0.0862 .
+d_y2_d_x2  -0.5708     0.2486  -2.296  0.0216 *
+d_y3_d_x2   0.5331     0.3358   1.588  0.1123  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+> # now with seemingly only dummy variables
+> margEffCondObsCovDA <- margEff( estResultBFGS, cond = TRUE,
++    atMean = TRUE, othDepVar = c( colMedians( yMat * 1 ) ), 
++    algorithm = GenzBretz(),
++    calcVCov = TRUE, returnJacobian = TRUE, dummyVars = c( "x1", "x2" ) )
+> summary( margEffCondObsCovDA )
+          Estimate Std. error z value Pr(> z)   
+d_y1_d_x1   0.2899     0.1708   1.697  0.0897 . 
+d_y2_d_x1   0.3558     0.2307   1.543  0.1229   
+d_y3_d_x1  -0.3706     0.3530  -1.050  0.2937   
+d_y1_d_x2  -0.3917     0.2790  -1.404  0.1603   
+d_y2_d_x2  -0.4423     0.1491  -2.967  0.0030 **
+d_y3_d_x2   0.3928     0.1621   2.423  0.0154 * 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+> 
+> # conditional marginal effects
+> # (assuming that all other dependent variables are one)
+> margEffCondOne <- margEff( estResultBFGS, cond = TRUE, othDepVar = 1,
++    algorithm = GenzBretz() )
+> print( margEffCondOne )
+      d_y1_d_x1    d_y2_d_x1    d_y3_d_x1     d_y1_d_x2    d_y2_d_x2
+1  1.766878e-01 0.3432683006 -0.349264084 -2.905192e-01 -0.431320149
+2  1.153484e-01 0.3596761868 -0.361870523 -2.291899e-01 -0.534231845
+3  1.124992e-01 0.3590246655 -0.361244529 -2.793627e-02 -0.487346175
+4  3.609633e-01 0.0694645017 -0.073360073 -2.641422e-01 -0.212280074
+5  7.929731e-02 0.3381003318 -0.343223755 -1.566558e-02 -0.393227059
+6  3.656145e-01 0.0477528062 -0.049586181 -2.816339e-01 -0.155486156
+7  8.025561e-04 0.0243038218 -0.053506160 -1.527073e-05 -0.007237107
+8  2.521476e-01 0.2683878275 -0.280778222 -3.333443e-01 -0.279546562
+9  1.474786e-01 0.3575139395 -0.360949264 -2.644338e-01 -0.484431688
+10 1.681334e-01 0.3484655128 -0.353640857 -2.833560e-01 -0.447376972
+11 2.058976e-01 0.3200081428 -0.328883694 -7.986489e-02 -0.589315642
+12 4.168856e-02 0.2699812896 -0.287657466 -5.571664e-03 -0.243054031
+13 6.282471e-02 0.3159154131 -0.324960430 -1.073426e-02 -0.333603918
+14 8.252791e-03 0.1126141858 -0.152735168 -4.572389e-04 -0.059829478
+15 6.746420e-03 0.0994122211 -0.139996990 -2.632565e-02 -0.288927939
+16 1.882725e-01 0.3350175752 -0.342159788 -6.792645e-02 -0.587079795
+17 2.216808e-01 0.3042766603 -0.314583141 -9.149649e-02 -0.584884106
+18 1.321608e-01 0.3605724669 -0.363116108 -2.485573e-01 -0.509670665
+19 3.158634e-01 0.1708741212 -0.182528222 -1.857743e-01 -0.425124122
+20 3.485063e-01 0.0089781736 -0.008180068 -2.345984e-01 -0.003748684
+21 4.291995e-02 0.2733599693 -0.290399333 -1.159976e-01 -0.546465697
+22 7.527641e-06 0.0008764661 -0.005797477 -5.392636e-05 -0.004697058
+23 3.279646e-01 0.1482405272 -0.158642179 -3.376436e-01 -0.120972355
+24 2.335902e-02 0.2044569486 -0.233822492 -7.271200e-02 -0.472041469
+25 2.488912e-02 0.2112921915 -0.239529408 -7.643008e-02 -0.481082815
+26 3.305961e-01 0.1430659182 -0.153133861 -3.367554e-01 -0.115360878
+27 6.996050e-02 0.3267209724 -0.333810139 -1.277478e-02 -0.360544256
+28 3.697711e-03 0.0677386518 -0.107382268 -1.382736e-04 -0.028962152
+29 1.602838e-01 0.3525152587 -0.356977215 -2.764906e-01 -0.461795157
+30 9.429876e-02 0.3508881318 -0.354022707 -2.082622e-02 -0.439897027
+31 1.223036e-01 0.3606360268 -0.362878409 -3.215382e-02 -0.508926710
+32 2.072019e-01 0.3187872119 -0.327786882 -3.119477e-01 -0.371500823
+33 5.764014e-02 0.3067479621 -0.317490037 -9.343950e-03 -0.312912586
+34 2.648576e-01 0.2513939487 -0.264277278 -1.285951e-01 -0.541550064
+35 8.016769e-02 0.3390172205 -0.343988258 -1.594768e-02 -0.396128892
+36 1.948154e-01 0.3297783990 -0.337571598 -7.222469e-02 -0.588794382
+37 3.392636e-01 0.1252130591 -0.134006462 -2.200645e-01 -0.338577089
+38 2.186971e-01 0.3074074008 -0.317457008 -3.185751e-01 -0.348283944
+39 6.386541e-02 0.3176168542 -0.326350396 -1.548071e-01 -0.569646523
+40 3.447918e-01 0.1129864533 -0.120815575 -3.296734e-01 -0.084487730
+41 3.262940e-01 0.1514742551 -0.162075820 -3.381530e-01 -0.124524063
+42 2.442291e-01 0.2783830069 -0.290342133 -3.304651e-01 -0.295930967
+43 1.733393e-01 0.3453955758 -0.351067885 -2.876942e-01 -0.437623959
+44 2.964178e-02 0.2306743304 -0.255570394 -3.255863e-03 -0.183536972
+45 3.605765e-01 0.0708014583 -0.074824779 -2.630649e-01 -0.215616043
+46 3.204143e-02 0.2395251689 -0.262837614 -9.298174e-02 -0.514706219
+47 3.372268e-01 0.0053924513 -0.004646657 -2.167553e-01 -0.002057801
+48 3.658413e-01 0.0457324170 -0.047379524 -2.956531e-01 -0.026781378
+49 7.767693e-02 0.3363308212 -0.341751326 -1.514612e-02 -0.387759683
+50 8.014647e-03 0.1106081689 -0.150825136 -3.042539e-02 -0.312672067
+      d_y3_d_x2
+1  0.3901083245
+2  0.4976933698
+3  0.4538180474
+4  0.2097690590
+5  0.3905351556
+6  0.1540883658
+7  0.0283912383
+8  0.2361440541
+9  0.4453484740
+10 0.4068752259
+11 0.5244770677
+12 0.2823961637
+13 0.3491159968
+14 0.1126532519
+15 0.3345042190
+16 0.5221262890
+17 0.5221842932
+18 0.4717298386
+19 0.4018382483
+20 0.0012165800
+21 0.5283221758
+22 0.0220435519
+23 0.0875151197
+24 0.4749678438
+25 0.4816140290
+26 0.0826818553
+27 0.3680158264
+28 0.0701926441
+29 0.4218168732
+30 0.4221148377
+31 0.4682078465
+32 0.3286910106
+33 0.3343496420
+34 0.4927044671
+35 0.3925162504
+36 0.5235976288
+37 0.3272971776
+38 0.3050670491
+39 0.5415919200
+40 0.0569044620
+41 0.0905951790
+42 0.2524085679
+43 0.3967870889
+44 0.2345316689
+45 0.2129895987
+46 0.5060433880
+47 0.0005616506
+48 0.0141168576
+49 0.3867950466
+50 0.3535086386
+> 
+> # conditional marginal effects with covariance matrix at sample mean
+> # (assuming that all other dependent variables are one)
+> margEffCondOneCov <- margEff( estResultBFGS, cond = TRUE, othDepVar = 1,
++    data = as.data.frame( t( colMeans( xMat ) ) ), calcVCov = TRUE,
++    algorithm = GenzBretz() )
+> print( margEffCondOneCov )
+  d_y1_d_x1 d_y2_d_x1  d_y3_d_x1  d_y1_d_x2 d_y2_d_x2 d_y3_d_x2
+1 0.1524699 0.3558136 -0.3596246 -0.1438174 -0.570811 0.5246618
+> print( attr( margEffCondOneCov, "vcov" ) )
+, , d_y1_d_x1
+
+  d_y1_d_x1   d_y2_d_x1  d_y3_d_x1  d_y1_d_x2    d_y2_d_x2 d_y3_d_x2
+1 0.7075564 -0.04370243 -0.2055559 -0.7499063 0.0007832827 0.2023201
+
+, , d_y2_d_x1
+
+    d_y1_d_x1  d_y2_d_x1  d_y3_d_x1  d_y1_d_x2  d_y2_d_x2   d_y3_d_x2
+1 -0.04370243 0.05320172 0.03726478 0.04091681 -0.0241312 -0.03729361
+
+, , d_y3_d_x1
+
+   d_y1_d_x1  d_y2_d_x1 d_y3_d_x1 d_y1_d_x2   d_y2_d_x2  d_y3_d_x2
+1 -0.2055559 0.03726478 0.1611677 0.2190094 -0.02792443 -0.1079185
+
+, , d_y1_d_x2
+
+   d_y1_d_x1  d_y2_d_x1 d_y3_d_x1 d_y1_d_x2    d_y2_d_x2  d_y3_d_x2
+1 -0.7499063 0.04091681 0.2190094 0.8052599 2.871672e-05 -0.2123891
+
+, , d_y2_d_x2
+
+     d_y1_d_x1  d_y2_d_x1   d_y3_d_x1    d_y1_d_x2  d_y2_d_x2    d_y3_d_x2
+1 0.0007832827 -0.0241312 -0.02792443 2.871672e-05 0.06178181 -0.004283597
+
+, , d_y3_d_x2
+
+  d_y1_d_x1   d_y2_d_x1  d_y3_d_x1  d_y1_d_x2    d_y2_d_x2 d_y3_d_x2
+1 0.2023201 -0.03729361 -0.1079185 -0.2123891 -0.004283597 0.1320079
+
+> print( drop( attr( margEffCondOneCov, "vcov" ) ) )
+              d_y1_d_x1   d_y2_d_x1   d_y3_d_x1     d_y1_d_x2     d_y2_d_x2
+d_y1_d_x1  0.7075563550 -0.04370243 -0.20555591 -7.499063e-01  7.832827e-04
+d_y2_d_x1 -0.0437024348  0.05320172  0.03726478  4.091681e-02 -2.413120e-02
+d_y3_d_x1 -0.2055559118  0.03726478  0.16116766  2.190094e-01 -2.792443e-02
+d_y1_d_x2 -0.7499062842  0.04091681  0.21900944  8.052599e-01  2.871672e-05
+d_y2_d_x2  0.0007832827 -0.02413120 -0.02792443  2.871672e-05  6.178181e-02
+d_y3_d_x2  0.2023200623 -0.03729361 -0.10791847 -2.123891e-01 -4.283597e-03
+             d_y3_d_x2
+d_y1_d_x1  0.202320062
+d_y2_d_x1 -0.037293615
+d_y3_d_x1 -0.107918471
+d_y1_d_x2 -0.212389056
+d_y2_d_x2 -0.004283597
+d_y3_d_x2  0.132007915
+> summary( margEffCondOneCov )
+          Estimate Std. error z value Pr(> z)  
+d_y1_d_x1   0.1525     0.8412   0.181  0.8562  
+d_y2_d_x1   0.3558     0.2307   1.543  0.1229  
+d_y3_d_x1  -0.3596     0.4015  -0.896  0.3704  
+d_y1_d_x2  -0.1438     0.8974  -0.160  0.8727  
+d_y2_d_x2  -0.5708     0.2486  -2.296  0.0216 *
+d_y3_d_x2   0.5247     0.3633   1.444  0.1487  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+> # now with using argument 'atMean'
+> margEffCondOneCovA <- margEff( estResultBFGS, cond = TRUE, othDepVar = 1,
++    atMean = TRUE, algorithm = GenzBretz(), calcVCov = TRUE )
+> all.equal( margEffCondOneCovA, margEffCondOneCov )
+[1] TRUE
+> 

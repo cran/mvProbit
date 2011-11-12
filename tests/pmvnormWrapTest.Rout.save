@@ -1,0 +1,186 @@
+
+R version 2.13.2 (2011-09-30)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: i686-pc-linux-gnu (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library( "mvProbit" )
+Loading required package: mvtnorm
+Loading required package: maxLik
+Loading required package: miscTools
+Loading required package: abind
+> library( "miscTools" )
+> 
+> # covariance matrix
+> sigma <- miscTools::symMatrix( c( 1, 0.2, 0.4, 1, -0.1, 1 ) )
+> 
+> ######## only upper ##########
+> upper <- c( -0.3, 0.7, -0.5 )
+> # Genz + Bretz (default)
+> pug <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
++    algorithm = GenzBretz(), random.seed = 123 )
+> print( pug )
+[1] 0.1360783
+attr(,"error")
+[1] 0.000118605
+attr(,"msg")
+[1] "Normal Completion"
+> 
+> # Miwa (as function)
+> pum <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
++    algorithm = Miwa, random.seed = 123 )
+> print( pum )
+[1] 0.136069
+attr(,"error")
+[1] NA
+attr(,"msg")
+[1] "Normal Completion"
+> all.equal( pug, pum, check.attributes = FALSE )
+[1] "Mean relative difference: 6.802734e-05"
+> 
+> # Miwa (as object returned from function Miwa())
+> pum1 <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
++    algorithm = Miwa(), random.seed = 123 )
+> all.equal( pum, pum1 )
+[1] TRUE
+> 
+> # Miwa (as character string)
+> pum2 <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
++    algorithm = "Miwa", random.seed = 123 )
+> all.equal( pum, pum2 )
+[1] TRUE
+> 
+> # TVPACK
+> put <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
++    algorithm = TVPACK, random.seed = 123 )
+> print( put )
+[1] 0.136069
+attr(,"error")
+[1] 1e-06
+attr(,"msg")
+[1] "Normal Completion"
+> all.equal( pug, put, check.attributes = FALSE )
+[1] "Mean relative difference: 6.804773e-05"
+> all.equal( pum, put, check.attributes = FALSE )
+[1] "Mean relative difference: 2.039169e-08"
+> 
+> # GHK
+> pughk <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
++    algorithm = "ghk", random.seed = 123, nGHK = 1000 )
+> print( pughk )
+[1] 0.1361924
+> all.equal( pug, pughk, check.attributes = FALSE )
+[1] "Mean relative difference: 0.0008381826"
+> all.equal( pum, pughk, check.attributes = FALSE )
+[1] "Mean relative difference: 0.0009062716"
+> 
+> # GHK, lower precision
+> pughk1 <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
++    algorithm = "ghk", random.seed = 123, nGHK = 100 )
+> print( pughk1 )
+[1] 0.1266176
+> all.equal( pughk, pughk1, check.attributes = FALSE )
+[1] "Mean relative difference: 0.07030298"
+> all.equal( pug, pughk1, check.attributes = FALSE )
+[1] "Mean relative difference: 0.06952372"
+> 
+> 
+> ######## only lower ##########
+> lower <- c( -0.7, 0.3, -0.9 )
+> # Genz + Bretz (default)
+> plg <- mvProbit:::pmvnormWrap( lower = lower, sigma = sigma, 
++    algorithm = GenzBretz, random.seed = 123 )
+> print( plg )
+[1] 0.2613009
+attr(,"error")
+[1] 0.000112777
+attr(,"msg")
+[1] "Normal Completion"
+> 
+> # Miwa
+> plm <- mvProbit:::pmvnormWrap( lower = lower, sigma = sigma, 
++    algorithm = Miwa, random.seed = 123 )
+> print( plm )
+[1] 0.2612964
+attr(,"error")
+[1] NA
+attr(,"msg")
+[1] "Normal Completion"
+> all.equal( plg, plm, check.attributes = FALSE )
+[1] "Mean relative difference: 1.695463e-05"
+> 
+> # TVPACK
+> plt <- mvProbit:::pmvnormWrap( lower = lower, sigma = sigma, 
++    algorithm = TVPACK, random.seed = 123 )
+> print( plt )
+[1] 0.2612964
+attr(,"error")
+[1] 1e-06
+attr(,"msg")
+[1] "Normal Completion"
+> all.equal( plg, plt, check.attributes = FALSE )
+[1] "Mean relative difference: 1.695363e-05"
+> all.equal( plm, plt, check.attributes = FALSE, tolerance = 1e-10 )
+[1] "Mean relative difference: 9.988721e-10"
+> 
+> # GHK
+> plghk <- mvProbit:::pmvnormWrap( lower = lower, sigma = sigma, 
++    algorithm = "GHK", random.seed = 123, nGHK = 1000 )
+> print( plghk )
+[1] 0.2595157
+> all.equal( plg, plghk, check.attributes = FALSE )
+[1] "Mean relative difference: 0.006831746"
+> all.equal( plm, plghk, check.attributes = FALSE )
+[1] "Mean relative difference: 0.006814907"
+> 
+> 
+> ######## partly lower, partly upper ##########
+> lower2 <- c( -Inf, 0.3, -Inf )
+> upper2 <- c( -0.3, Inf, -0.5 )
+> # Genz + Bretz (default)
+> pbg <- mvProbit:::pmvnormWrap( lower = lower2, upper = upper2, sigma = sigma, 
++    algorithm = GenzBretz(), random.seed = 123 )
+> print( pbg )
+[1] 0.06244105
+attr(,"error")
+[1] 0.0001142209
+attr(,"msg")
+[1] "Normal Completion"
+> 
+> # Miwa
+> pbm <- mvProbit:::pmvnormWrap( lower = lower2, upper = upper2, sigma = sigma, 
++    algorithm = Miwa, random.seed = 123 )
+> print( pbm )
+[1] 0.06246127
+attr(,"error")
+[1] NA
+attr(,"msg")
+[1] "Normal Completion"
+> all.equal( pbg, pbm, check.attributes = FALSE )
+[1] "Mean relative difference: 0.0003238739"
+> 
+> # GHK
+> pbghk <- mvProbit:::pmvnormWrap( lower = lower2, upper = upper2, sigma = sigma, 
++    algorithm = "GHK", random.seed = 123, nGHK = 1000 )
+> print( pbghk )
+[1] 0.06256424
+> all.equal( pbg, pbghk, check.attributes = FALSE )
+[1] "Mean relative difference: 0.001973"
+> all.equal( pbm, pbghk, check.attributes = FALSE )
+[1] "Mean relative difference: 0.001648592"
+> 
+> 
+> 
+> 
