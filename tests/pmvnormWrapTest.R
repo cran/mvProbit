@@ -15,7 +15,7 @@ print( pug )
 pum <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
    algorithm = Miwa, random.seed = 123 )
 print( pum )
-all.equal( pug, pum, check.attributes = FALSE )
+all.equal( pug, pum, check.attributes = FALSE, tol = 1e-4 )
 
 # Miwa (as object returned from function Miwa())
 pum1 <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
@@ -31,22 +31,22 @@ all.equal( pum, pum2 )
 put <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
    algorithm = TVPACK, random.seed = 123 )
 print( put )
-all.equal( pug, put, check.attributes = FALSE )
-all.equal( pum, put, check.attributes = FALSE )
+all.equal( pug, put, check.attributes = FALSE, tol = 1e-4 )
+all.equal( pum, put, check.attributes = FALSE, tol = 1e-6 )
 
 # GHK
 pughk <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
    algorithm = "ghk", random.seed = 123, nGHK = 1000 )
 print( pughk )
-all.equal( pug, pughk, check.attributes = FALSE )
-all.equal( pum, pughk, check.attributes = FALSE )
+all.equal( pug, pughk, tol = 1e-3, check.attributes = FALSE )
+all.equal( pum, pughk, tol = 1e-3, check.attributes = FALSE )
 
 # GHK, lower precision
 pughk1 <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
    algorithm = "ghk", random.seed = 123, nGHK = 100 )
 print( pughk1 )
-all.equal( pughk, pughk1, check.attributes = FALSE )
-all.equal( pug, pughk1, check.attributes = FALSE )
+all.equal( pughk, pughk1, tol = 1e-2, check.attributes = FALSE )
+all.equal( pug, pughk1, tol = 1e-2, check.attributes = FALSE )
 
 
 ######## only lower ##########
@@ -60,21 +60,21 @@ print( plg )
 plm <- mvProbit:::pmvnormWrap( lower = lower, sigma = sigma, 
    algorithm = Miwa, random.seed = 123 )
 print( plm )
-all.equal( plg, plm, check.attributes = FALSE )
+all.equal( plg, plm, tol = 1e-4, check.attributes = FALSE )
 
 # TVPACK
 plt <- mvProbit:::pmvnormWrap( lower = lower, sigma = sigma, 
    algorithm = TVPACK, random.seed = 123 )
 print( plt )
-all.equal( plg, plt, check.attributes = FALSE )
-all.equal( plm, plt, check.attributes = FALSE, tolerance = 1e-10 )
+all.equal( plg, plt, tol =1e-4, check.attributes = FALSE )
+all.equal( plm, plt, check.attributes = FALSE, tolerance = 1e-8 )
 
 # GHK
 plghk <- mvProbit:::pmvnormWrap( lower = lower, sigma = sigma, 
    algorithm = "GHK", random.seed = 123, nGHK = 1000 )
 print( plghk )
-all.equal( plg, plghk, check.attributes = FALSE )
-all.equal( plm, plghk, check.attributes = FALSE )
+all.equal( plg, plghk, tol = 1e-3, check.attributes = FALSE )
+all.equal( plm, plghk, tol = 1e-3, check.attributes = FALSE )
 
 
 ######## partly lower, partly upper ##########
@@ -89,14 +89,12 @@ print( pbg )
 pbm <- mvProbit:::pmvnormWrap( lower = lower2, upper = upper2, sigma = sigma, 
    algorithm = Miwa, random.seed = 123 )
 print( pbm )
-all.equal( pbg, pbm, check.attributes = FALSE )
+all.equal( pbg, pbm, tol = 1e-3, check.attributes = FALSE )
 
 # GHK
 pbghk <- mvProbit:::pmvnormWrap( lower = lower2, upper = upper2, sigma = sigma, 
    algorithm = "GHK", random.seed = 123, nGHK = 1000 )
 print( pbghk )
-all.equal( pbg, pbghk, check.attributes = FALSE )
-all.equal( pbm, pbghk, check.attributes = FALSE )
-
-
+all.equal( pbg, pbghk, tol = 1e-3, check.attributes = FALSE )
+all.equal( pbm, pbghk, tol = 1e-4, check.attributes = FALSE )
 

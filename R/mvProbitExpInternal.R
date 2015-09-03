@@ -45,7 +45,8 @@ mvProbitExpInternal <- function( yMat, xMat, coef, sigma,
                   pmvnormWrap( upper = xBeta[ i, ], sigma = coef$sigma,
                      algorithm = algorithm, nGHK = nGHK, 
                      random.seed = random.seed, ... ) /
-                  pmvnormWrap( upper = xBeta[ i, -k ], sigma = coef$sigma[ -k, -k ],
+                  pmvnormWrap( upper = xBeta[ i, -k ],
+                     sigma = coef$sigma[ -k, -k, drop = FALSE ],
                      algorithm = algorithm, nGHK = nGHK, 
                      random.seed = random.seed, ... )
             }
@@ -62,7 +63,8 @@ mvProbitExpInternal <- function( yMat, xMat, coef, sigma,
                   pmvnormWrap( upper = xBetaTmp, sigma = sigmaTmp,
                      algorithm = algorithm, nGHK = nGHK, 
                      random.seed = random.seed, ... ) / 
-                  pmvnormWrap( upper = xBetaTmp[ -k ], sigma = sigmaTmp[ -k, -k ],
+                  pmvnormWrap( upper = xBetaTmp[ -k ],
+                     sigma = sigmaTmp[ -k, -k, drop = FALSE ],
                      algorithm = algorithm, nGHK = nGHK, 
                      random.seed = random.seed, ... )
             }

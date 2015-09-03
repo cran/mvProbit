@@ -1,8 +1,7 @@
 
-R version 2.13.2 (2011-09-30)
-Copyright (C) 2011 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
-Platform: i686-pc-linux-gnu (32-bit)
+R version 3.2.2 (2015-08-14) -- "Fire Safety"
+Copyright (C) 2015 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -20,6 +19,12 @@ Type 'q()' to quit R.
 Loading required package: mvtnorm
 Loading required package: maxLik
 Loading required package: miscTools
+
+Please cite the 'maxLik' package as:
+Henningsen, Arne and Toomet, Ott (2011). maxLik: A package for maximum likelihood estimation in R. Computational Statistics 26(3), 443-458. DOI 10.1007/s00180-010-0217-1.
+
+If you have questions, suggestions, or comments regarding the 'maxLik' package, please use a forum or 'tracker' at maxLik's R-Forge site:
+https://r-forge.r-project.org/projects/maxlik/
 Loading required package: abind
 > library( "miscTools" )
 > 
@@ -47,8 +52,8 @@ attr(,"error")
 [1] NA
 attr(,"msg")
 [1] "Normal Completion"
-> all.equal( pug, pum, check.attributes = FALSE )
-[1] "Mean relative difference: 6.802734e-05"
+> all.equal( pug, pum, check.attributes = FALSE, tol = 1e-4 )
+[1] TRUE
 > 
 > # Miwa (as object returned from function Miwa())
 > pum1 <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
@@ -71,30 +76,30 @@ attr(,"error")
 [1] 1e-06
 attr(,"msg")
 [1] "Normal Completion"
-> all.equal( pug, put, check.attributes = FALSE )
-[1] "Mean relative difference: 6.804773e-05"
-> all.equal( pum, put, check.attributes = FALSE )
-[1] "Mean relative difference: 2.039169e-08"
+> all.equal( pug, put, check.attributes = FALSE, tol = 1e-4 )
+[1] TRUE
+> all.equal( pum, put, check.attributes = FALSE, tol = 1e-6 )
+[1] TRUE
 > 
 > # GHK
 > pughk <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
 +    algorithm = "ghk", random.seed = 123, nGHK = 1000 )
 > print( pughk )
-[1] 0.1361924
-> all.equal( pug, pughk, check.attributes = FALSE )
-[1] "Mean relative difference: 0.0008381826"
-> all.equal( pum, pughk, check.attributes = FALSE )
-[1] "Mean relative difference: 0.0009062716"
+[1] 0.1360032
+> all.equal( pug, pughk, tol = 1e-3, check.attributes = FALSE )
+[1] TRUE
+> all.equal( pum, pughk, tol = 1e-3, check.attributes = FALSE )
+[1] TRUE
 > 
 > # GHK, lower precision
 > pughk1 <- mvProbit:::pmvnormWrap( upper = upper, sigma = sigma, 
 +    algorithm = "ghk", random.seed = 123, nGHK = 100 )
 > print( pughk1 )
-[1] 0.1266176
-> all.equal( pughk, pughk1, check.attributes = FALSE )
-[1] "Mean relative difference: 0.07030298"
-> all.equal( pug, pughk1, check.attributes = FALSE )
-[1] "Mean relative difference: 0.06952372"
+[1] 0.136272
+> all.equal( pughk, pughk1, tol = 1e-2, check.attributes = FALSE )
+[1] TRUE
+> all.equal( pug, pughk1, tol = 1e-2, check.attributes = FALSE )
+[1] TRUE
 > 
 > 
 > ######## only lower ##########
@@ -118,8 +123,8 @@ attr(,"error")
 [1] NA
 attr(,"msg")
 [1] "Normal Completion"
-> all.equal( plg, plm, check.attributes = FALSE )
-[1] "Mean relative difference: 1.695463e-05"
+> all.equal( plg, plm, tol = 1e-4, check.attributes = FALSE )
+[1] TRUE
 > 
 > # TVPACK
 > plt <- mvProbit:::pmvnormWrap( lower = lower, sigma = sigma, 
@@ -130,20 +135,20 @@ attr(,"error")
 [1] 1e-06
 attr(,"msg")
 [1] "Normal Completion"
-> all.equal( plg, plt, check.attributes = FALSE )
-[1] "Mean relative difference: 1.695363e-05"
-> all.equal( plm, plt, check.attributes = FALSE, tolerance = 1e-10 )
-[1] "Mean relative difference: 9.988721e-10"
+> all.equal( plg, plt, tol =1e-4, check.attributes = FALSE )
+[1] TRUE
+> all.equal( plm, plt, check.attributes = FALSE, tolerance = 1e-8 )
+[1] TRUE
 > 
 > # GHK
 > plghk <- mvProbit:::pmvnormWrap( lower = lower, sigma = sigma, 
 +    algorithm = "GHK", random.seed = 123, nGHK = 1000 )
 > print( plghk )
-[1] 0.2595157
-> all.equal( plg, plghk, check.attributes = FALSE )
-[1] "Mean relative difference: 0.006831746"
-> all.equal( plm, plghk, check.attributes = FALSE )
-[1] "Mean relative difference: 0.006814907"
+[1] 0.2613852
+> all.equal( plg, plghk, tol = 1e-3, check.attributes = FALSE )
+[1] TRUE
+> all.equal( plm, plghk, tol = 1e-3, check.attributes = FALSE )
+[1] TRUE
 > 
 > 
 > ######## partly lower, partly upper ##########
@@ -168,19 +173,20 @@ attr(,"error")
 [1] NA
 attr(,"msg")
 [1] "Normal Completion"
-> all.equal( pbg, pbm, check.attributes = FALSE )
-[1] "Mean relative difference: 0.0003238739"
+> all.equal( pbg, pbm, tol = 1e-3, check.attributes = FALSE )
+[1] TRUE
 > 
 > # GHK
 > pbghk <- mvProbit:::pmvnormWrap( lower = lower2, upper = upper2, sigma = sigma, 
 +    algorithm = "GHK", random.seed = 123, nGHK = 1000 )
 > print( pbghk )
-[1] 0.06256424
-> all.equal( pbg, pbghk, check.attributes = FALSE )
-[1] "Mean relative difference: 0.001973"
-> all.equal( pbm, pbghk, check.attributes = FALSE )
-[1] "Mean relative difference: 0.001648592"
+[1] 0.06246009
+> all.equal( pbg, pbghk, tol = 1e-3, check.attributes = FALSE )
+[1] TRUE
+> all.equal( pbm, pbghk, tol = 1e-4, check.attributes = FALSE )
+[1] TRUE
 > 
 > 
-> 
-> 
+> proc.time()
+   user  system elapsed 
+  0.384   0.008   0.391 

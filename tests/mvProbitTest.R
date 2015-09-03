@@ -1,4 +1,5 @@
 library( "mvProbit" )
+options( digits = 4 )
 
 ## generate a simulated data set
 set.seed( 123 )
@@ -26,14 +27,14 @@ allCoef <- c( c( beta ), sigma[ lower.tri( sigma ) ] )
 
 # generate dependent variables
 yMatLin <- xMat %*% beta 
-yMat <- ( yMatLin + rmvnorm( nObs, sigma = sigma ) ) > 0
+yMat <- ( yMatLin + rmvnorm( nObs, sigma = sigma, pre0.9_9994 = TRUE ) ) > 0
 colnames( yMat ) <- paste( "y", 1:3, sep = "" )
 # (yMatLin > 0 )== yMat
 
 # unconditional expectations of dependent variables
 yExp <- mvProbitExp( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ) )
-print( yExp )
+round( yExp, 3 )
 yExpA <- mvProbitExp( ~ x1 + x2 + x3 + x4, coef = allCoef,
    data = as.data.frame( xMat ) )
 all.equal( yExp, yExpA )
@@ -46,7 +47,7 @@ all.equal( yExp, as.data.frame( yExp2 ) )
 yExpCond <- mvProbitExp( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE,
    algorithm = GenzBretz() )
-print( yExpCond )
+round( yExpCond, 3 )
 yExpCondA <- mvProbitExp( ~ x1 + x2 + x3 + x4, coef = allCoef,
    data = as.data.frame( xMat ), cond = TRUE,
    algorithm = GenzBretz() )
@@ -72,31 +73,31 @@ identical( yExpCond, yExpCond3 )
 yExpCond4 <- mvProbitExp( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE,
    algorithm = Miwa )
-all.equal( yExpCond, yExpCond4 )
+all.equal( yExpCond, yExpCond4, tol = 1e-3 )
 # now with integrals obtained by the Miwa algorithm, less precise
 yExpCond5 <- mvProbitExp( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE,
    algorithm = Miwa( steps = 32 ) )
-all.equal( yExpCond4, yExpCond5 )
+all.equal( yExpCond4, yExpCond5, tol = 1e-3 )
 # now with integrals obtained by the TVPACK algorithm
 yExpCond6 <- mvProbitExp( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE,
    algorithm = TVPACK )
-all.equal( yExpCond, yExpCond6 )
+all.equal( yExpCond, yExpCond6, tol = 1e-3 )
 # now with integrals obtained by the TVPACK algorithm, less precise
 yExpCond7 <- mvProbitExp( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE,
    algorithm = TVPACK( abseps = 0.5 ) )
-all.equal( yExpCond6, yExpCond7 )
+all.equal( yExpCond6, yExpCond7, tol = 1e-3 )
 # now with integrals obtained by the GHK algorithm
 yExpCond8 <- mvProbitExp( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE )
-all.equal( yExpCond, yExpCond8 )
+all.equal( yExpCond, yExpCond8, tol = 1e-3 )
 # now with integrals obtained by the GHK algorithm, less precise
 yExpCond9 <- mvProbitExp( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE,
    nGHK = 100 )
-all.equal( yExpCond8, yExpCond9 )
+all.equal( yExpCond8, yExpCond9, tol = 1e-3 )
 
 
 # conditional expectations of dependent variables
@@ -104,7 +105,7 @@ all.equal( yExpCond8, yExpCond9 )
 yExpCondObs <- mvProbitExp( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ), 
    cond = TRUE, algorithm = GenzBretz() )
-print( yExpCondObs )
+round( yExpCondObs, 3 )
 yExpCondObsA <- mvProbitExp( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = allCoef, data = as.data.frame( cbind( xMat, yMat ) ), 
    cond = TRUE, algorithm = GenzBretz() )
@@ -134,46 +135,46 @@ identical( yExpCondObs, yExpCondObs3 )
 yExpCondObs4 <- mvProbitExp( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    cond = TRUE, algorithm = Miwa )
-all.equal( yExpCondObs, yExpCondObs4 )
+all.equal( yExpCondObs, yExpCondObs4, tol = 1e-3 )
 # now with integrals obtained by the Miwa algorithm, less precise
 yExpCondObs5 <- mvProbitExp( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    cond = TRUE, algorithm = Miwa( steps = 32 ) )
-all.equal( yExpCondObs4, yExpCondObs5 )
+all.equal( yExpCondObs4, yExpCondObs5, tol = 1e-3 )
 # now with integrals obtained by the TVPACK algorithm
 yExpCondObs6 <- mvProbitExp( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    cond = TRUE, algorithm = TVPACK )
-all.equal( yExpCondObs, yExpCondObs6 )
+all.equal( yExpCondObs, yExpCondObs6, tol = 1e-3 )
 # now with integrals obtained by the TVPACK algorithm, less precise
 yExpCondObs7 <- mvProbitExp( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    cond = TRUE, algorithm = TVPACK( abseps = 0.5 ) )
-all.equal( yExpCondObs6, yExpCondObs7 )
+all.equal( yExpCondObs6, yExpCondObs7, tol = 1e-3 )
 # now with integrals obtained by the GHK algorithm
 yExpCondObs8 <- mvProbitExp( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    cond = TRUE )
-all.equal( yExpCondObs, yExpCondObs8 )
+all.equal( yExpCondObs, yExpCondObs8, tol = 1e-3 )
 # now with integrals obtained by the GHK algorithm, less precise
 yExpCondObs9 <- mvProbitExp( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    cond = TRUE, nGHK = 100 )
-all.equal( yExpCondObs8, yExpCondObs9 )
+all.equal( yExpCondObs8, yExpCondObs9, tol = 1e-3 )
 
 
 # unconditional expectations of dependent variables by simulation
 nSim <- 10000
 ySim <- array( NA, c( nObs, ncol( yMat ), nSim ) )
 for( s in 1:nSim ) {
-   ySim[ , , s ] <- ( yMatLin + rmvnorm( nObs, sigma = sigma ) ) > 0
+   ySim[ , , s ] <- ( yMatLin + rmvnorm( nObs, sigma = sigma, pre0.9_9994 = TRUE ) ) > 0
 }
 yExpSim <- matrix( NA, nrow = nObs, ncol = ncol( yMat ) )
 for( i in 1:nObs ) {
    yExpSim[ i, ] <- rowSums( ySim[ i, , ] ) / nSim
 }
-print( yExpSim )
-print( yExpSim - as.matrix( yExp ) )
+round( yExpSim, 3 )
+round( yExpSim - as.matrix( yExp ), 3 )
 
 # for testing state of random number generator
 rnorm( 4 )
@@ -182,7 +183,7 @@ rnorm( 4 )
 logLikVal <- mvProbitLogLik( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    algorithm = GenzBretz() )
-print( logLikVal )
+round( logLikVal, 3 )
 logLikValA <- mvProbitLogLik( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = allCoef, data = as.data.frame( cbind( xMat, yMat ) ),
    algorithm = GenzBretz() )
@@ -197,37 +198,38 @@ identical( logLikVal, logLikVal3 )
 logLikVal4 <- mvProbitLogLik( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    algorithm = Miwa )
-all.equal( logLikVal, logLikVal4 )
+all.equal( logLikVal, logLikVal4, tol = 1e-3 )
 # now with integrals obtained by the Miwa algorithm, less precise
 logLikVal5 <- mvProbitLogLik( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    algorithm = Miwa( steps = 32 ) )
-all.equal( logLikVal4, logLikVal5 )
+all.equal( logLikVal4, logLikVal5, tol = 1e-3 )
 # now with integrals obtained by the TVPACK algorithm
 logLikVal6 <- mvProbitLogLik( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    algorithm = TVPACK )
-all.equal( logLikVal, logLikVal6 )
+all.equal( logLikVal, logLikVal6, tol = 1e-3 )
 # now with integrals obtained by the TVPACK algorithm, less precise
 logLikVal7 <- mvProbitLogLik( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    algorithm = TVPACK( abseps = 0.5 ) )
-all.equal( logLikVal6, logLikVal7 )
+all.equal( logLikVal6, logLikVal7, tol = 1e-3 )
 # now with integrals obtained by the GHK algorithm
 logLikVal8 <- mvProbitLogLik( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ) )
-all.equal( logLikVal, logLikVal8 )
+all.equal( logLikVal, logLikVal8, tol = 1e-3 )
 # now with integrals obtained by the GHK algorithm, less precise
 logLikVal9 <- mvProbitLogLik( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    nGHK = 100 )
-all.equal( logLikVal8, logLikVal9 )
+all.equal( logLikVal8, logLikVal9, tol = 1e-3 )
 
 # calculating log likelihood value(s) with one-sided gradients
 logLikValGrad1 <- mvProbitLogLik( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    oneSidedGrad = TRUE, algorithm = GenzBretz() )
-print( logLikValGrad1 )
+round( c( logLikValGrad1 ), 3 )
+round( attr( logLikValGrad1, "gradient" ), 3 )
 logLikValGrad1A <- mvProbitLogLik( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = allCoef, data = as.data.frame( cbind( xMat, yMat ) ),
    oneSidedGrad = TRUE, algorithm = GenzBretz() )
@@ -237,7 +239,8 @@ all.equal( logLikValGrad1, logLikValGrad1A )
 logLikValGrad <- mvProbitLogLik( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    returnGrad = TRUE, algorithm = GenzBretz() )
-print( logLikValGrad )
+round( c( logLikValGrad ), 3 )
+round( attr( logLikValGrad, "gradient" ), 3 )
 # now manually
 llTmp <- function( coef ) {
    betaTmp <- coef[ 1:15 ]
@@ -250,15 +253,13 @@ llTmp <- function( coef ) {
    return( result )
 }
 logLikValGrad2 <- numericGradient( llTmp, allCoef )
-print( logLikValGrad2 )
-attr( logLikValGrad1, "gradient" ) / logLikValGrad2 - 1
-range( attr( logLikValGrad1, "gradient" ) / logLikValGrad2 - 1, na.rm = TRUE )
-attr( logLikValGrad1, "gradient" ) - logLikValGrad2
-range( attr( logLikValGrad1, "gradient" ) - logLikValGrad2 )
-attr( logLikValGrad1, "gradient" ) / logLikValGrad2 - 1
-range( attr( logLikValGrad, "gradient" ) / logLikValGrad2 - 1, na.rm = TRUE )
-attr( logLikValGrad, "gradient" ) - logLikValGrad2
-range( attr( logLikValGrad, "gradient" ) - logLikValGrad2 )
+round( logLikValGrad2, 3 )
+# attr( logLikValGrad1, "gradient" ) / logLikValGrad2 - 1
+all.equal( attr( logLikValGrad1, "gradient" ), logLikValGrad2,
+  tol = 1e-5, check.attributes = FALSE )
+# attr( logLikValGrad, "gradient" ) / logLikValGrad2 - 1
+all.equal( attr( logLikValGrad, "gradient" ), logLikValGrad2,
+  check.attributes = FALSE  )
 
 # for testing state of random number generator
 rnorm( 4 )
@@ -266,10 +267,10 @@ rnorm( 4 )
 # calculating marginal effects, unconditional
 margEffUnc <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), vcov = diag( 18 ) )
-print( margEffUnc )
-print( attr( margEffUnc, "vcov" )[ 1:3, , ] )
-print( drop( attr( margEffUnc, "vcov" )[ nObs, , ] ) )
-summary( margEffUnc )
+round( margEffUnc, 3 )
+round( attr( margEffUnc, "vcov" )[ 1:3, , ], 2 )
+round( drop( attr( margEffUnc, "vcov" )[ nObs, , ] ), 2 )
+print( summary( margEffUnc ), digits = c( 3, 3, 2, 2, 2 ) )
 margEffUncA <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = allCoef,
    data = as.data.frame( xMat ), vcov = diag( 18 ) )
 all.equal( margEffUnc, margEffUncA )
@@ -282,25 +283,27 @@ all.equal( margEffUncD, margEffUnc )
 margEffUncD0 <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), vcov = diag( 18 ),
    dummyVar = NULL )
-summary( margEffUncD0 )
+print( summary( margEffUncD0 ), digits = c( 3, 3, 2, 2, 2 ) )
 # now with seemingly only dummy variables
 margEffUncDA <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), vcov = diag( 18 ),
    dummyVar = c( "x1", "x2", "x3", "x4" ) )
-summary( margEffUncDA )
+print( summary( margEffUncDA ), digits = c( 3, 3, 2, 2, 2 ) )
 # now with mean values of the marginal effects
 margEffUncM <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), vcov = diag( 18 ), 
    addMean = TRUE )
 all.equal( margEffUnc, margEffUncM[ 1:nObs, ], check.attributes = FALSE )
-print( margEffUncM[ nObs:(nObs+1), ] )
+round( margEffUncM[ nObs:(nObs+1), ], 3 )
 all.equal( attr( margEffUnc, "vcov" ), 
    attr( margEffUncM, "vcov" )[ 1:nObs, , ] )
-print( attr( margEffUncM, "vcov" )[ nObs:(nObs+1), , ] )
-print( drop( attr( margEffUncM, "vcov" )[ nObs+1, , ] ) )
+round( attr( margEffUncM, "vcov" )[ nObs:(nObs+1), , ], 2 )
+round( drop( attr( margEffUncM, "vcov" )[ nObs+1, , ] ), 2 )
 all.equal( summary( margEffUnc )[ , ], 
    summary( margEffUncM )[ 1:( 12 * nObs ), ], check.attributes = FALSE )
-printCoefmat( summary( margEffUncM )[ -( 1:( 12 * (nObs-1) ) ), ] )
+printCoefmat( round(
+  summary( margEffUncM )[ -( 1:( 12 * (nObs-1) ) ), ],
+  digits = 3 ), digits = 3 )
 
 # for testing state of random number generator
 rnorm( 4 )
@@ -310,7 +313,7 @@ rnorm( 4 )
 margEffCond <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE,
    algorithm = GenzBretz() )
-print( margEffCond )
+round( margEffCond, 3 )
 margEffCondA <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = allCoef,
    data = as.data.frame( xMat ), cond = TRUE,
    algorithm = GenzBretz() )
@@ -324,44 +327,44 @@ all.equal( margEffCondD, margEffCond )
 margEffCondD0 <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE,
    dummyVars = NULL, algorithm = GenzBretz() )
-print( margEffCondD0 )
+round( margEffCondD0, 3 )
 # now with seemingly only dummy variables
 margEffCondDA <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE,
    dummyVars = c( "x1", "x2", "x3", "x4" ), algorithm = GenzBretz() )
-print( margEffCondDA )
+round( margEffCondDA, 3 )
 # now with integrals obtained by the Miwa algorithm, reduced precision
 margEffCond1 <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE,
    algorithm = Miwa( steps = 32 ) )
-print( margEffCond1 )
-all.equal( margEffCond, margEffCond1 )
+round( margEffCond1, 3 )
+all.equal( margEffCond, margEffCond1, tol = 1e-3 )
 # now with integrals obtained by the GHK algorithm
 margEffCond2 <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE )
-print( margEffCond2 )
-all.equal( margEffCond, margEffCond2 )
-all.equal( margEffCond1, margEffCond2 )
+round( margEffCond2, 3 )
+all.equal( margEffCond, margEffCond2, tol = 1e-3 )
+all.equal( margEffCond1, margEffCond2, tol = 1e-3 )
 # now with integrals obtained by the GHK algorithm, reduced precision
 margEffCond3 <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat ), cond = TRUE,
    nGHK = 100 )
-print( margEffCond3 )
-all.equal( margEffCond, margEffCond3 )
-all.equal( margEffCond2, margEffCond3 )
+round( margEffCond3, 3 )
+all.equal( margEffCond, margEffCond3, tol = 1e-3 )
+all.equal( margEffCond2, margEffCond3, tol = 1e-3 )
 # now with variance covariance matrix and Jacobian
 margEffCondV <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ), 
    sigma = sigma, data = as.data.frame( xMat )[ c(1,5,10), ], cond = TRUE, 
    vcov = diag( 18 ), returnJacobian = TRUE, algorithm = GenzBretz() )
-print( attr( margEffCondV, "vcov" ) )
-print( drop( attr( margEffCondV, "vcov" )[ 1, , ] ) )
-print( attr( margEffCondV, "jacobian" ) )
-print( drop( attr( margEffCondV, "jacobian" )[ 1, , ] ) )
-summary( margEffCondV )
+round( attr( margEffCondV, "vcov" ), 2 )
+round( drop( attr( margEffCondV, "vcov" )[ 1, , ] ), 2 )
+round( attr( margEffCondV, "jacobian" ), 2 )
+round( drop( attr( margEffCondV, "jacobian" )[ 1, , ] ), 2 )
+print( summary( margEffCondV ), digits = c( 3, 3, 2, 2, 2 ) )
 margEffCondVA <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = allCoef,
    data = as.data.frame( xMat )[ c(1,5,10), ], cond = TRUE, 
    vcov = diag( 18 ), returnJacobian = TRUE, algorithm = GenzBretz() )
-all.equal( margEffCondV, margEffCondVA )
+all.equal( margEffCondV, margEffCondVA, tol = 1e-3 )
 # now with Jacobian but without variance covariance matrix
 margEffCondJac <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = allCoef,
    data = as.data.frame( xMat )[ c(1,5,10), ], cond = TRUE, 
@@ -373,18 +376,18 @@ margEffCondM <- mvProbitMargEff( ~ x1 + x2 + x3 + x4, coef = c( beta ),
    vcov = diag( 18 ), addMean = TRUE, returnJacobian = TRUE,
    algorithm = GenzBretz() )
 all.equal( margEffCondV, margEffCondM[ 1:3, ], check.attributes = FALSE )
-print( margEffCondM )
+round( margEffCondM, 3 )
 all.equal( attr( margEffCondV, "vcov" ), 
    attr( margEffCondM, "vcov" )[ 1:3, , ] )
-print( attr( margEffCondM, "vcov" ) )
-print( drop( attr( margEffCondM, "vcov" )[ 4, , ] ) )
+round( attr( margEffCondM, "vcov" ), 2 )
+round( drop( attr( margEffCondM, "vcov" )[ 4, , ] ), 2 )
 all.equal( attr( margEffCondV, "jacobian" ), 
    attr( margEffCondM, "jacobian" )[ 1:3, , ] )
-print( attr( margEffCondM, "jacobian" ) )
-print( drop( attr( margEffCondM, "jacobian" )[ 4, , ] ) )
+round( attr( margEffCondM, "jacobian" ), 2 )
+round( drop( attr( margEffCondM, "jacobian" )[ 4, , ] ), 2 )
 all.equal( summary( margEffCondV )[ , ], summary( margEffCondM )[ 1:36, ],
    check.attributes = FALSE ) 
-summary( margEffCondM )[ -( 1:24 ), ]
+print( summary( margEffCondM ), digits = c( 3, 3, 2, 2, 2 ) )
 
 # for testing state of random number generator
 rnorm( 4 )
@@ -394,7 +397,7 @@ rnorm( 4 )
 margEffCondObs <- mvProbitMargEff( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ), 
    cond = TRUE, algorithm = GenzBretz() )
-print( margEffCondObs )
+round( margEffCondObs, 3 )
 margEffCondObsA <- mvProbitMargEff( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = allCoef, data = as.data.frame( cbind( xMat, yMat ) ), 
    cond = TRUE, algorithm = GenzBretz() )
@@ -403,26 +406,26 @@ all.equal( margEffCondObs, margEffCondObsA )
 margEffCondObs1 <- mvProbitMargEff( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    cond = TRUE, algorithm = Miwa( steps = 32 ) )
-print( margEffCondObs1 )
-all.equal( margEffCondObs, margEffCondObs1 )
+round( margEffCondObs1, 3 )
+all.equal( margEffCondObs, margEffCondObs1, tol = 1e-3 )
 # now with integrals obtained by the GHK algorithm
 margEffCondObs2 <- mvProbitMargEff( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, data = as.data.frame( cbind( xMat, yMat ) ),
    cond = TRUE )
-print( margEffCondObs2 )
-all.equal( margEffCondObs, margEffCondObs2 )
-all.equal( margEffCondObs1, margEffCondObs2 )
+round( margEffCondObs2, 3 )
+all.equal( margEffCondObs, margEffCondObs2, tol = 1e-3 )
+all.equal( margEffCondObs1, margEffCondObs2, tol = 1e-3 )
 # now with variance covariance matrix and Jacobian
 margEffCondObsV <- mvProbitMargEff( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = c( beta ), sigma = sigma, 
    data = as.data.frame( cbind( xMat, yMat ) )[ c(1,5,10), ], 
    cond = TRUE, vcov = diag( 18 ), returnJacobian = TRUE,
    algorithm = GenzBretz() )
-print( attr( margEffCondObsV, "vcov" ) )
-print( drop( attr( margEffCondObsV, "vcov" )[ 1, , ] ) )
-print( attr( margEffCondObsV, "jacobian" ) )
-print( drop( attr( margEffCondObsV, "jacobian" )[ 1, , ] ) )
-summary( margEffCondObsV )
+round( attr( margEffCondObsV, "vcov" ), 2 )
+round( drop( attr( margEffCondObsV, "vcov" )[ 1, , ] ), 2 )
+round( attr( margEffCondObsV, "jacobian" ), 2 )
+round( drop( attr( margEffCondObsV, "jacobian" )[ 1, , ] ), 2 )
+print( summary( margEffCondObsV ), digits = c( 3, 3, 2, 2, 2 ) )
 margEffCondObsVA <- mvProbitMargEff( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4, 
    coef = allCoef, data = as.data.frame( cbind( xMat, yMat ) )[ c(1,5,10), ], 
    cond = TRUE, vcov = diag( 18 ), returnJacobian = TRUE,
@@ -442,18 +445,18 @@ margEffCondObsM <- mvProbitMargEff( cbind( y1, y2, y3 ) ~ x1 + x2 + x3 + x4,
    cond = TRUE, vcov = diag( 18 ), addMean = TRUE, returnJacobian = TRUE,
    algorithm = GenzBretz() )
 all.equal( margEffCondObsV, margEffCondObsM[ 1:3, ], check.attributes = FALSE )
-print( margEffCondObsM )
+round( margEffCondObsM, 3 )
 all.equal( attr( margEffCondObsV, "vcov" ), 
    attr( margEffCondObsM, "vcov" )[ 1:3, , ] )
-print( attr( margEffCondObsM, "vcov" ) )
-print( drop( attr( margEffCondObsM, "vcov" )[ 4, , ] ) )
+round( attr( margEffCondObsM, "vcov" ), 2 )
+round( drop( attr( margEffCondObsM, "vcov" )[ 4, , ] ), 2 )
 all.equal( attr( margEffCondObsV, "jacobian" ), 
    attr( margEffCondObsM, "jacobian" )[ 1:3, , ] )
-print( attr( margEffCondObsM, "jacobian" ) )
-print( drop( attr( margEffCondObsM, "jacobian" )[ 4, , ] ) )
+round( attr( margEffCondObsM, "jacobian" ), 2 )
+round( drop( attr( margEffCondObsM, "jacobian" )[ 4, , ] ), 2 )
 all.equal( summary( margEffCondObsV )[ , ], summary( margEffCondObsM )[ 1:36, ],
    check.attributes = FALSE )
-summary( margEffCondObsM )[ -( 1:24 ), ]
+print( summary( margEffCondObsM ), digits = c( 3, 3, 2, 2, 2 ) )
 
 # for testing state of random number generator
 rnorm( 4 )

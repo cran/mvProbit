@@ -114,7 +114,10 @@ pmvnormWrap <- function( lower = -Inf, upper = Inf, sigma, algorithm,
                " or the upper truncation point must be 'Inf'" )
          }
       }
+      sink(tempfile())
+      on.exit( sink(), add = TRUE )
       result <- ghkvec( L = L, trunpt = trunpt, above = above, r = nGHK )
+      result <- drop( result )
    } else {
       result <- pmvnorm( lower = lower, upper = upper, sigma = sigma,
          algorithm = algorithm, ... )
