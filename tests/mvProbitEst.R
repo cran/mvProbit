@@ -56,7 +56,7 @@ all.equal( estResultBHHH, estResultBHHH1, tol = 1e-5 )
 estResultBFGS <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
    start = c( beta ), startSigma = sigma, method = "BFGS",
    data = dat, 
-   tol = 0.5, algorithm = GenzBretz() )
+   reltol = 0.5, algorithm = GenzBretz() )
 print( estResultBFGS )
 summary( estResultBFGS )
 logLik( estResultBFGS )
@@ -65,7 +65,7 @@ logLik( estResultBFGS )
 estResultBFGS1 <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
    start = c( beta ), startSigma = sigma, method = "BFGS", 
    data = dat, 
-   tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
+   reltol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
 print( estResultBFGS1 )
 summary( estResultBFGS1 )
 logLik( estResultBFGS1 )
@@ -74,7 +74,7 @@ all.equal( estResultBFGS, estResultBFGS1, tol = 1e-5 )
 # estimation with the BFGS algorithm, one-sided gradients, no starting values
 estResultBFGS1a <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
    data = dat, method = "BFGS",
-   tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
+   reltol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
 print( estResultBFGS1a )
 summary( estResultBFGS1a )
 logLik( estResultBFGS1a )
@@ -82,7 +82,7 @@ logLik( estResultBFGS1a )
 # estimation with the BFGS algorithm, one-sided gradients, no starting values for beta
 estResultBFGS1b <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
    startSigma = sigma, data = dat, 
-   method = "BFGS", tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
+   method = "BFGS", reltol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
 print( estResultBFGS1b )
 summary( estResultBFGS1b )
 logLik( estResultBFGS1b )
@@ -90,7 +90,7 @@ logLik( estResultBFGS1b )
 # estimation with the BFGS algorithm, one-sided gradients, no starting values for sigma
 estResultBFGS1s <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
    start = c( beta ), data = dat, 
-   method = "BFGS", tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
+   method = "BFGS", reltol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
 print( estResultBFGS1s )
 summary( estResultBFGS1s )
 logLik( estResultBFGS1s )
@@ -99,7 +99,7 @@ logLik( estResultBFGS1s )
 estResultBFGSm <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
    start = c( beta ), startSigma = sigma, 
    data = dat, method = "BFGS",
-   tol = 0.5, algorithm = Miwa( steps = 64 ) )
+   reltol = 0.5, algorithm = Miwa( steps = 64 ) )
 print( estResultBFGSm )
 summary( estResultBFGSm )
 logLik( estResultBFGSm )
@@ -109,7 +109,7 @@ all.equal( estResultBFGS, estResultBFGSm, tol = 1e-3 )
 estResultBFGSg <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
    start = c( beta ), startSigma = sigma, 
    data = dat, method = "BFGS",
-   tol = 0.5 )
+   reltol = 0.5 )
 print( estResultBFGSg )
 summary( estResultBFGSg )
 logLik( estResultBFGSg )
@@ -129,36 +129,36 @@ logLik( estResultNM )
 dat$x1Na <- dat$x1
 dat$x1Na[7] <- NA
 estResultNax <- try( mvProbit( cbind( y1, y2, y3 ) ~ x1Na + x2,
-   data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
+   data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 estResultNaxStart <- try( mvProbit( cbind( y1, y2, y3 ) ~ x1Na + x2,
    start = c( beta ), startSigma = sigma,
-   data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
+   data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 
 # estimation with NA in a dependant variable
 dat$y2Na <- dat$y2
 dat$y2Na[9] <- NA
 estResultNay <- try( mvProbit( cbind( y1, y2Na, y3 ) ~ x1 + x2,
-   data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
+   data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 
 # estimation with NA both in a dependant variable and in an explanatory variable
 estResultNaxy <- try( mvProbit( cbind( y1, y2Na, y3 ) ~ x1Na + x2,
    start = c( beta ), startSigma = sigma,
-   data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
+   data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 
 # estimation with infinity in an explanatory variable
 dat$x2Inf <- dat$x2
 dat$x2Inf[15] <- Inf
 estResultInf <- try( mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2Inf,
-   data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
+   data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 estResultInfStart <- try( mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2Inf,
    start = c( beta ), startSigma = sigma,
-   data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
+   data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 
 # estimation with a factor as explanatory variable (x1 with 2 levels)
 dat$x1Fac <- as.factor( ifelse( dat$x1 == 0, "green", "red" ) )
 estResultFac <- mvProbit( cbind( y1, y2, y3 ) ~ x1Fac + x2,
    start = c( beta ), startSigma = sigma,
-   data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() )
+   data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() )
 print( estResultFac )
 summary( estResultFac )
 logLik( estResultFac )
@@ -168,7 +168,7 @@ all.equal( estResultBFGS, estResultFac )
 dat$x1Fac3 <- as.factor(
    ifelse( rnorm( nObs ) <= -0.5, "brown", as.character( dat$x1Fac ) ) )
 estResultFac13 <- mvProbit( cbind( y1, y2, y3 ) ~ x1Fac3 + x2,
-   data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() )
+   data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() )
 print( estResultFac13 )
 summary( estResultFac13 )
 logLik( estResultFac13 )
@@ -177,7 +177,7 @@ logLik( estResultFac13 )
 dat$x2Fac3 <- as.factor( ifelse( dat$x2 < -0.5, "low", 
    ifelse( dat$x2 > 0.5, "high", "medium" ) ) )
 estResultFac23 <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2Fac3,
-   data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() )
+   data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() )
 print( estResultFac23 )
 summary( estResultFac23 )
 logLik( estResultFac23 )
@@ -186,7 +186,7 @@ logLik( estResultFac23 )
 dat$x3Fac3 <- as.factor( ifelse( rnorm( nObs ) < -0.5, "low", 
    ifelse( rnorm( nObs ) < 0, "medium", "high" ) ) )
 estResultFac33 <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2 + x3Fac3,
-   data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() )
+   data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() )
 print( estResultFac33 )
 summary( estResultFac33 )
 logLik( estResultFac33 )

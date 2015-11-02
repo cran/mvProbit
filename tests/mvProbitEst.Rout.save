@@ -163,13 +163,13 @@ Log-likelihood: -56.91 on 12 Df
 > estResultBFGS <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
 +    start = c( beta ), startSigma = sigma, method = "BFGS",
 +    data = dat, 
-+    tol = 0.5, algorithm = GenzBretz() )
++    reltol = 0.5, algorithm = GenzBretz() )
 > print( estResultBFGS )
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, start = c(beta), 
     startSigma = sigma, method = "BFGS", algorithm = GenzBretz(), 
-    tol = 0.5)
+    reltol = 0.5)
 
 Coefficients:
    b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
@@ -182,7 +182,7 @@ Coefficients:
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, start = c(beta), 
     startSigma = sigma, method = "BFGS", algorithm = GenzBretz(), 
-    tol = 0.5)
+    reltol = 0.5)
 
 Coefficients:
       Estimate Std. error t value Pr(> t)  
@@ -201,7 +201,7 @@ R_2_3 -0.02382    0.34466  -0.069  0.9449
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-BFGS maximisation, 4 iterations
+BFGS maximization, 4 iterations
 Return code 0: successful convergence 
 Log-likelihood: -52.94 on 12 Df
 
@@ -212,13 +212,13 @@ Log-likelihood: -52.94 on 12 Df
 > estResultBFGS1 <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
 +    start = c( beta ), startSigma = sigma, method = "BFGS", 
 +    data = dat, 
-+    tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
++    reltol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
 > print( estResultBFGS1 )
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, start = c(beta), 
     startSigma = sigma, method = "BFGS", algorithm = GenzBretz(), 
-    oneSidedGrad = TRUE, tol = 0.5)
+    oneSidedGrad = TRUE, reltol = 0.5)
 
 Coefficients:
    b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
@@ -231,7 +231,7 @@ Coefficients:
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, start = c(beta), 
     startSigma = sigma, method = "BFGS", algorithm = GenzBretz(), 
-    oneSidedGrad = TRUE, tol = 0.5)
+    oneSidedGrad = TRUE, reltol = 0.5)
 
 Coefficients:
       Estimate Std. error t value Pr(> t)  
@@ -250,7 +250,7 @@ R_2_3 -0.02382    0.34466  -0.069  0.9449
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-BFGS maximisation, 4 iterations
+BFGS maximization, 4 iterations
 Return code 0: successful convergence 
 Log-likelihood: -52.94 on 12 Df
 
@@ -262,12 +262,12 @@ Log-likelihood: -52.94 on 12 Df
 > # estimation with the BFGS algorithm, one-sided gradients, no starting values
 > estResultBFGS1a <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
 +    data = dat, method = "BFGS",
-+    tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
++    reltol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
 > print( estResultBFGS1a )
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, method = "BFGS", 
-    algorithm = GenzBretz(), oneSidedGrad = TRUE, tol = 0.5)
+    algorithm = GenzBretz(), oneSidedGrad = TRUE, reltol = 0.5)
 
 Coefficients:
    b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
@@ -279,7 +279,7 @@ Coefficients:
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, method = "BFGS", 
-    algorithm = GenzBretz(), oneSidedGrad = TRUE, tol = 0.5)
+    algorithm = GenzBretz(), oneSidedGrad = TRUE, reltol = 0.5)
 
 Coefficients:
       Estimate Std. error t value Pr(> t)  
@@ -298,7 +298,7 @@ R_2_3 -0.03453    0.35889  -0.096  0.9234
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-BFGS maximisation, 3 iterations
+BFGS maximization, 3 iterations
 Return code 0: successful convergence 
 Log-likelihood: -49.36 on 12 Df
 
@@ -308,13 +308,13 @@ Log-likelihood: -49.36 on 12 Df
 > # estimation with the BFGS algorithm, one-sided gradients, no starting values for beta
 > estResultBFGS1b <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
 +    startSigma = sigma, data = dat, 
-+    method = "BFGS", tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
++    method = "BFGS", reltol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
 > print( estResultBFGS1b )
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, startSigma = sigma, 
     method = "BFGS", algorithm = GenzBretz(), oneSidedGrad = TRUE, 
-    tol = 0.5)
+    reltol = 0.5)
 
 Coefficients:
   b_1_0   b_1_1   b_1_2   b_2_0   b_2_1   b_2_2   b_3_0   b_3_1   b_3_2   R_1_2 
@@ -327,7 +327,7 @@ Coefficients:
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, startSigma = sigma, 
     method = "BFGS", algorithm = GenzBretz(), oneSidedGrad = TRUE, 
-    tol = 0.5)
+    reltol = 0.5)
 
 Coefficients:
       Estimate Std. error t value Pr(> t)  
@@ -346,7 +346,7 @@ R_2_3   0.1663     0.3389   0.491  0.6235
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-BFGS maximisation, 3 iterations
+BFGS maximization, 3 iterations
 Return code 0: successful convergence 
 Log-likelihood: -49.57 on 12 Df
 
@@ -356,13 +356,13 @@ Log-likelihood: -49.57 on 12 Df
 > # estimation with the BFGS algorithm, one-sided gradients, no starting values for sigma
 > estResultBFGS1s <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
 +    start = c( beta ), data = dat, 
-+    method = "BFGS", tol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
++    method = "BFGS", reltol = 0.5, algorithm = GenzBretz(), oneSidedGrad = TRUE )
 > print( estResultBFGS1s )
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, start = c(beta), 
     method = "BFGS", algorithm = GenzBretz(), oneSidedGrad = TRUE, 
-    tol = 0.5)
+    reltol = 0.5)
 
 Coefficients:
    b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
@@ -375,7 +375,7 @@ Coefficients:
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, start = c(beta), 
     method = "BFGS", algorithm = GenzBretz(), oneSidedGrad = TRUE, 
-    tol = 0.5)
+    reltol = 0.5)
 
 Coefficients:
       Estimate Std. error t value Pr(> t)  
@@ -394,7 +394,7 @@ R_2_3  0.09435    0.33920   0.278  0.7809
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-BFGS maximisation, 4 iterations
+BFGS maximization, 4 iterations
 Return code 0: successful convergence 
 Log-likelihood: -52.78 on 12 Df
 
@@ -405,14 +405,14 @@ Log-likelihood: -52.78 on 12 Df
 > estResultBFGSm <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
 +    start = c( beta ), startSigma = sigma, 
 +    data = dat, method = "BFGS",
-+    tol = 0.5, algorithm = Miwa( steps = 64 ) )
++    reltol = 0.5, algorithm = Miwa( steps = 64 ) )
 There were 13 warnings (use warnings() to see them)
 > print( estResultBFGSm )
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, start = c(beta), 
     startSigma = sigma, method = "BFGS", algorithm = Miwa(steps = 64), 
-    tol = 0.5)
+    reltol = 0.5)
 
 Coefficients:
    b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
@@ -425,7 +425,7 @@ Coefficients:
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, start = c(beta), 
     startSigma = sigma, method = "BFGS", algorithm = Miwa(steps = 64), 
-    tol = 0.5)
+    reltol = 0.5)
 
 Coefficients:
       Estimate Std. error t value Pr(> t)  
@@ -444,7 +444,7 @@ R_2_3 -0.02386    0.34468  -0.069  0.9448
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-BFGS maximisation, 4 iterations
+BFGS maximization, 4 iterations
 Return code 0: successful convergence 
 Log-likelihood: -52.94 on 12 Df
 
@@ -457,13 +457,13 @@ Log-likelihood: -52.94 on 12 Df
 > estResultBFGSg <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2,
 +    start = c( beta ), startSigma = sigma, 
 +    data = dat, method = "BFGS",
-+    tol = 0.5 )
++    reltol = 0.5 )
 There were 50 or more warnings (use warnings() to see the first 50)
 > print( estResultBFGSg )
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, start = c(beta), 
-    startSigma = sigma, method = "BFGS", tol = 0.5)
+    startSigma = sigma, method = "BFGS", reltol = 0.5)
 
 Coefficients:
    b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
@@ -475,7 +475,7 @@ Coefficients:
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2, data = dat, start = c(beta), 
-    startSigma = sigma, method = "BFGS", tol = 0.5)
+    startSigma = sigma, method = "BFGS", reltol = 0.5)
 
 Coefficients:
       Estimate Std. error t value Pr(> t)  
@@ -494,7 +494,7 @@ R_2_3 -0.02362    0.34492  -0.068  0.9454
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-BFGS maximisation, 4 iterations
+BFGS maximization, 4 iterations
 Return code 0: successful convergence 
 Log-likelihood: -52.95 on 12 Df
 
@@ -545,7 +545,7 @@ R_2_3  -0.1000     0.3416  -0.293  0.7697
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-Nelder-Mead maximisation, 13 iterations
+Nelder-Mead maximization, 13 iterations
 Return code 0: successful convergence 
 Log-likelihood: -56.95 on 12 Df
 
@@ -556,12 +556,12 @@ Log-likelihood: -56.95 on 12 Df
 > dat$x1Na <- dat$x1
 > dat$x1Na[7] <- NA
 > estResultNax <- try( mvProbit( cbind( y1, y2, y3 ) ~ x1Na + x2,
-+    data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
++    data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 Error in if (!isTRUE(all.equal(sigma, t(sigma))) || any(diag(sigma) <  : 
   missing value where TRUE/FALSE needed
 > estResultNaxStart <- try( mvProbit( cbind( y1, y2, y3 ) ~ x1Na + x2,
 +    start = c( beta ), startSigma = sigma,
-+    data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
++    data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 Error in checkmvArgs(lower = lower, upper = upper, mean = mean, corr = corr,  : 
   'upper' not specified or contains NA
 > 
@@ -569,14 +569,14 @@ Error in checkmvArgs(lower = lower, upper = upper, mean = mean, corr = corr,  :
 > dat$y2Na <- dat$y2
 > dat$y2Na[9] <- NA
 > estResultNay <- try( mvProbit( cbind( y1, y2Na, y3 ) ~ x1 + x2,
-+    data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
++    data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 Error in mvProbit(cbind(y1, y2Na, y3) ~ x1 + x2, data = dat, method = "BFGS",  : 
   all dependent variables must be either 0, 1, TRUE, or FALSE
 > 
 > # estimation with NA both in a dependant variable and in an explanatory variable
 > estResultNaxy <- try( mvProbit( cbind( y1, y2Na, y3 ) ~ x1Na + x2,
 +    start = c( beta ), startSigma = sigma,
-+    data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
++    data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 Error in mvProbit(cbind(y1, y2Na, y3) ~ x1Na + x2, start = c(beta), startSigma = sigma,  : 
   all dependent variables must be either 0, 1, TRUE, or FALSE
 > 
@@ -584,12 +584,12 @@ Error in mvProbit(cbind(y1, y2Na, y3) ~ x1Na + x2, start = c(beta), startSigma =
 > dat$x2Inf <- dat$x2
 > dat$x2Inf[15] <- Inf
 > estResultInf <- try( mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2Inf,
-+    data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
++    data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 Error in glm.fit(x = structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  : 
   NA/NaN/Inf in 'x'
 > estResultInfStart <- try( mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2Inf,
 +    start = c( beta ), startSigma = sigma,
-+    data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() ) )
++    data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() ) )
 Error in maxOptim(fn = fn, grad = grad, hess = hess, start = start, method = "BFGS",  : 
   NA in the initial gradient
 > 
@@ -597,13 +597,13 @@ Error in maxOptim(fn = fn, grad = grad, hess = hess, start = start, method = "BF
 > dat$x1Fac <- as.factor( ifelse( dat$x1 == 0, "green", "red" ) )
 > estResultFac <- mvProbit( cbind( y1, y2, y3 ) ~ x1Fac + x2,
 +    start = c( beta ), startSigma = sigma,
-+    data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() )
++    data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() )
 > print( estResultFac )
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1Fac + x2, data = dat, 
     start = c(beta), startSigma = sigma, method = "BFGS", algorithm = GenzBretz(), 
-    tol = 0.5)
+    reltol = 0.5)
 
 Coefficients:
    b_1_0    b_1_1    b_1_2    b_2_0    b_2_1    b_2_2    b_3_0    b_3_1 
@@ -616,7 +616,7 @@ Coefficients:
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1Fac + x2, data = dat, 
     start = c(beta), startSigma = sigma, method = "BFGS", algorithm = GenzBretz(), 
-    tol = 0.5)
+    reltol = 0.5)
 
 Coefficients:
       Estimate Std. error t value Pr(> t)  
@@ -635,7 +635,7 @@ R_2_3 -0.02382    0.34466  -0.069  0.9449
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-BFGS maximisation, 4 iterations
+BFGS maximization, 4 iterations
 Return code 0: successful convergence 
 Log-likelihood: -52.94 on 12 Df
 
@@ -649,12 +649,12 @@ Log-likelihood: -52.94 on 12 Df
 > dat$x1Fac3 <- as.factor(
 +    ifelse( rnorm( nObs ) <= -0.5, "brown", as.character( dat$x1Fac ) ) )
 > estResultFac13 <- mvProbit( cbind( y1, y2, y3 ) ~ x1Fac3 + x2,
-+    data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() )
++    data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() )
 > print( estResultFac13 )
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1Fac3 + x2, data = dat, 
-    method = "BFGS", algorithm = GenzBretz(), tol = 0.5)
+    method = "BFGS", algorithm = GenzBretz(), reltol = 0.5)
 
 Coefficients:
    b_1_0    b_1_1    b_1_2    b_1_3    b_2_0    b_2_1    b_2_2    b_2_3 
@@ -666,7 +666,7 @@ Coefficients:
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1Fac3 + x2, data = dat, 
-    method = "BFGS", algorithm = GenzBretz(), tol = 0.5)
+    method = "BFGS", algorithm = GenzBretz(), reltol = 0.5)
 
 Coefficients:
       Estimate Std. error t value Pr(> t)   
@@ -688,7 +688,7 @@ R_2_3 -0.04633    0.48673  -0.095  0.9242
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-BFGS maximisation, 3 iterations
+BFGS maximization, 3 iterations
 Return code 0: successful convergence 
 Log-likelihood: -47.83 on 15 Df
 
@@ -699,12 +699,12 @@ Log-likelihood: -47.83 on 15 Df
 > dat$x2Fac3 <- as.factor( ifelse( dat$x2 < -0.5, "low", 
 +    ifelse( dat$x2 > 0.5, "high", "medium" ) ) )
 > estResultFac23 <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2Fac3,
-+    data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() )
++    data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() )
 > print( estResultFac23 )
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2Fac3, data = dat, 
-    method = "BFGS", algorithm = GenzBretz(), tol = 0.5)
+    method = "BFGS", algorithm = GenzBretz(), reltol = 0.5)
 
 Coefficients:
    b_1_0    b_1_1    b_1_2    b_1_3    b_2_0    b_2_1    b_2_2    b_2_3 
@@ -716,7 +716,7 @@ Coefficients:
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2Fac3, data = dat, 
-    method = "BFGS", algorithm = GenzBretz(), tol = 0.5)
+    method = "BFGS", algorithm = GenzBretz(), reltol = 0.5)
 
 Coefficients:
       Estimate Std. error t value Pr(> t)
@@ -736,7 +736,7 @@ R_1_2  0.84969        Inf       0       1
 R_1_3 -0.04342        Inf       0       1
 R_2_3 -0.29460        Inf       0       1
 
-BFGS maximisation, 3 iterations
+BFGS maximization, 3 iterations
 Return code 0: successful convergence 
 Log-likelihood: -50.99 on 15 Df
 
@@ -747,12 +747,12 @@ Log-likelihood: -50.99 on 15 Df
 > dat$x3Fac3 <- as.factor( ifelse( rnorm( nObs ) < -0.5, "low", 
 +    ifelse( rnorm( nObs ) < 0, "medium", "high" ) ) )
 > estResultFac33 <- mvProbit( cbind( y1, y2, y3 ) ~ x1 + x2 + x3Fac3,
-+    data = dat, method = "BFGS", tol = 0.5, algorithm = GenzBretz() )
++    data = dat, method = "BFGS", reltol = 0.5, algorithm = GenzBretz() )
 > print( estResultFac33 )
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2 + x3Fac3, data = dat, 
-    method = "BFGS", algorithm = GenzBretz(), tol = 0.5)
+    method = "BFGS", algorithm = GenzBretz(), reltol = 0.5)
 
 Coefficients:
    b_1_0    b_1_1    b_1_2    b_1_3    b_1_4    b_2_0    b_2_1    b_2_2 
@@ -766,7 +766,7 @@ Coefficients:
 
 Call:
 mvProbit(formula = cbind(y1, y2, y3) ~ x1 + x2 + x3Fac3, data = dat, 
-    method = "BFGS", algorithm = GenzBretz(), tol = 0.5)
+    method = "BFGS", algorithm = GenzBretz(), reltol = 0.5)
 
 Coefficients:
       Estimate Std. error t value Pr(> t)  
@@ -791,7 +791,7 @@ R_2_3 -0.04226    0.44482  -0.095  0.9243
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-BFGS maximisation, 3 iterations
+BFGS maximization, 3 iterations
 Return code 0: successful convergence 
 Log-likelihood: -48.82 on 18 Df
 
@@ -3000,4 +3000,4 @@ Error in colMeans(data) : 'x' must be numeric
 > 
 > proc.time()
    user  system elapsed 
-  94.05    0.40   94.57 
+ 48.120   0.264  48.986 

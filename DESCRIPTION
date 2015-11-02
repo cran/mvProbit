@@ -1,6 +1,6 @@
 Package: mvProbit
-Version: 0.1-4
-Date: 2015-09-03
+Version: 0.1-8
+Date: 2015-11-02
 Title: Multivariate Probit Models
 Author: Arne Henningsen <arne.henningsen@gmail.com>
 Maintainer: Arne Henningsen <arne.henningsen@gmail.com>
@@ -14,6 +14,6 @@ Description: Tools for estimating multivariate probit models,
 License: GPL (>= 2)
 URL: http://www.sampleSelection.org
 NeedsCompilation: no
-Packaged: 2015-09-03 11:38:36 UTC; arne
+Packaged: 2015-11-02 07:23:36 UTC; arne
 Repository: CRAN
-Date/Publication: 2015-09-03 15:23:09
+Date/Publication: 2015-11-02 17:16:21

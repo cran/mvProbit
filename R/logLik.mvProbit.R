@@ -4,7 +4,7 @@ logLik.mvProbit <- function( object, coef = NULL, data = NULL,
    if( is.null( coef ) && is.null( data ) &&
          is.null( algorithm ) && is.null( nGHK ) && is.null( random.seed ) ) {
 
-      result <- maxLik:::logLik.maxLik( object )
+      result <- NextMethod( "logLik", object )
 
    } else {
       formula <- eval( object$call$formula )

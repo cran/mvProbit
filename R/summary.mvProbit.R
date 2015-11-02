@@ -1,6 +1,6 @@
 summary.mvProbit <- function( object, ... ) {
 
-   result <- maxLik:::summary.maxLik( object )
+   result <- NextMethod( "summary", object )
 
    result$call <- object$call
    result$start <- object$start
