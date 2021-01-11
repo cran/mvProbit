@@ -7,7 +7,7 @@ mvProbit <- function( formula, data, start = NULL, startSigma = NULL,
    if( is.list( formula ) ) {
       stop( "using different regressors for the dependent variables",
          " has not been implemented yet. Sorry!" )
-   } else if( class( formula ) != "formula" ) {
+   } else if( !inherits( formula, "formula" ) ) {
       stop( "argument 'formula' must be a formula" )
    }
 
@@ -83,8 +83,8 @@ mvProbit <- function( formula, data, start = NULL, startSigma = NULL,
    if( is.null( start ) ) {
       uvProbit <- list()
       for( i in 1:nDep ) {
-         uvProbit[[ i ]] <- glm( yMat[ , i ] ~ xMat - 1, 
-            family = binomial( link = "probit" ) )
+         uvProbit[[ i ]] <- suppressWarnings( glm( yMat[ , i ] ~ xMat - 1, 
+            family = binomial( link = "probit" ) ) )
          start <- c( start, coef( uvProbit[[ i ]] ) )
       }
    }

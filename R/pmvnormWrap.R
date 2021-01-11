@@ -95,7 +95,7 @@ pmvnormWrap <- function( lower = -Inf, upper = Inf, sigma, algorithm,
          stop( "argument 'nGHK' must be positive" )
       }
       L <- try( t( chol( sigma ) ), silent = TRUE )
-      if( class( L ) == "try-error" ) {
+      if( inherits( L, "try-error" ) ) {
          warning( "the correlation matrix is not positive definite" )
          return( NA )
       }

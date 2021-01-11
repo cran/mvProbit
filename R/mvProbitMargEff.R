@@ -115,6 +115,11 @@ mvProbitMargEff <- function( formula, coef, sigma = NULL, vcov = NULL, data,
 
    # add mean values of marginal effects if demanded by the user
    if( addMean ) {
+      # if the row names are internally stored as numeric values,
+      # rbind() does not add "mean" as the name of the new row
+      if( !is.character( attributes( result )$row.names ) ) {
+         rownames( result ) <- as.character( rownames( result ) )
+      }
       result <- rbind( result, mean = colMeans( result ) )
       if( !is.null( vcov ) || returnJacobian ) {
          mJacobian <- jacobian[ 1, , ]

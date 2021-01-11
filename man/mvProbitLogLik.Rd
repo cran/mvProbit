@@ -132,7 +132,7 @@ mvProbitLogLik( formula, coef, sigma = NULL, data,
    Greene, W.H. (1996): 
    \emph{Marginal Effects in the Bivariate Probit Model},
    NYU Working Paper No. EC-96-11. 
-   Available at \url{http://ssrn.com/abstract=1293106}.
+   Available at \url{https://www.ssrn.com/abstract=1293106}.
 }
 
 \author{Arne Henningsen}
