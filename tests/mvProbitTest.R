@@ -1,4 +1,4 @@
-library( "mvProbit" )
+suppressPackageStartupMessages( library( "mvProbit" ) )
 options( digits = 4 )
 
 ## generate a simulated data set

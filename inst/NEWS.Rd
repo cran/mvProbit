@@ -1,5 +1,10 @@
 \name{NEWS}
 \title{News for Package 'mvProbit'}
+\section{Changes in mvProbit version 0.1-12 (2026-09-30)}{
+  \itemize{
+    \item a few internal improvements
+  }
+}
 \section{Changes in mvProbit version 0.1-10 (2021-01-07)}{
   \itemize{
     \item a few internal improvements

@@ -5,7 +5,7 @@ mvProbitExp <- function( formula, coef, sigma = NULL, data,
    if( is.list( formula ) ) {
       stop( "using different regressors for the dependent variables",
          " has not been implemented yet. Sorry!" )
-   } else if( class( formula ) != "formula" ) {
+   } else if( ! inherits( formula, "formula" ) ) {
       stop( "argument 'formula' must be a formula" )
    }
 

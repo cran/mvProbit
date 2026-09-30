@@ -1,7 +1,7 @@
 
-R version 3.2.2 (2015-08-14) -- "Fire Safety"
-Copyright (C) 2015 The R Foundation for Statistical Computing
-Platform: x86_64-pc-linux-gnu (64-bit)
+R version 4.6.1 (2026-06-24) -- "Happy Hop"
+Copyright (C) 2026 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -15,18 +15,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> library( "mvProbit" )
-Loading required package: mvtnorm
-Loading required package: maxLik
-Loading required package: miscTools
-
-Please cite the 'maxLik' package as:
-Henningsen, Arne and Toomet, Ott (2011). maxLik: A package for maximum likelihood estimation in R. Computational Statistics 26(3), 443-458. DOI 10.1007/s00180-010-0217-1.
-
-If you have questions, suggestions, or comments regarding the 'maxLik' package, please use a forum or 'tracker' at maxLik's R-Forge site:
-https://r-forge.r-project.org/projects/maxlik/
-Loading required package: abind
-> library( "miscTools" )
+> suppressPackageStartupMessages( library( "mvProbit" ) )
+> suppressPackageStartupMessages( library( "miscTools" ) )
 > 
 > # covariance matrix
 > sigma <- miscTools::symMatrix( c( 1, 0.2, 0.4, 1, -0.1, 1 ) )
@@ -189,4 +179,4 @@ attr(,"msg")
 > 
 > proc.time()
    user  system elapsed 
-  0.384   0.008   0.391 
+  0.623   0.403   0.392 

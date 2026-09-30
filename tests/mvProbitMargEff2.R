@@ -1,6 +1,6 @@
 # I thank Mohit Batham for providing this R script that demonstrated
 # a bug in mvProbitMargEff() when called with 2 dependent variables
-library( "mvProbit" )
+suppressPackageStartupMessages( library( "mvProbit" ) )
 nObs <- 100
 set.seed( 123 )
 xData <- data.frame(
